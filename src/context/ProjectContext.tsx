@@ -39,6 +39,8 @@ import {
   ProjectWorkspace,
   LLMModelTarget,
   PromptOptimizationMode,
+  ProjectMemoryEvent,
+  MemoryState,
 } from '../types';
 import {
   initialMetrics,
@@ -75,13 +77,12 @@ import {
   initialSecurityScanEvents,
   initialWorkspaces,
   initialLLMModels,
+  initialMemoryEvents,
 } from '../data/initialSeedData';
 import { securityService } from '../security/services/securityService';
 import { evaluateSecurityGate } from '../security/services/securityGate';
 import { calculateSecurityMetrics } from '../security/services/securityMetrics';
 import { StartAssessmentInput, SecurityAssessmentResult } from '../security/types';
-import { firestoreService } from '../services/firestoreService';
-import { isFirebaseConfigured } from '../services/firebase';
 
 interface ToastInfo {
   id: string;
@@ -204,6 +205,19 @@ interface ProjectContextType {
   acceptFindingRisk: (findingId: string, rationale: string, approver: string, expiry?: string) => void;
   createRemediationTaskFromFinding: (findingId: string) => void;
   evaluateSecurityGateResult: () => SecurityGateResult;
+
+  // Cross-Role Project Memory & Change Rationale
+  memoryEvents: ProjectMemoryEvent[];
+  selectedMemoryId: string | null;
+  isMemoryDrawerOpen: boolean;
+  openMemoryDrawer: (params?: { eventId?: string; entityType?: string; entityId?: string }) => void;
+  closeMemoryDrawer: () => void;
+  recordMemoryEvent: (event: Omit<ProjectMemoryEvent, 'id' | 'occurredAt'>) => void;
+  updateMemoryState: (eventId: string, state: MemoryState, supersedingEventId?: string) => void;
+  getMemoryForEntity: (entityType: string, entityId: string) => ProjectMemoryEvent[];
+  getMemoryTimeline: (entityType: string, entityId: string) => ProjectMemoryEvent[];
+  getMemoriesByRole: (role: RoleType) => ProjectMemoryEvent[];
+  getSupersedingEvent: (eventId: string) => ProjectMemoryEvent | undefined;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -403,22 +417,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.warn('Failed to cache workspace data in localStorage', e);
       }
 
-      // Persist to Cloud Firestore
-      if (isFirebaseConfigured()) {
-        firestoreService.saveWorkspaceMeta(newWs);
-        firestoreService.seedWorkspaceData(newWs.id, {
-          workspaceMeta: newWs,
-          prds: prdItems,
-          devTasks: taskItems,
-          contextBlocks: ctxItems,
-          decisions: decItems,
-          securityFindings: secItems,
-          qaTestCases: [],
-          bugs: [],
-          notes: [],
-          feedback: [],
-        });
-      }
 
       showToast(`Ingested real repository memory for ${newWs.name} (${newWs.code})!`, 'success');
     },
@@ -466,23 +464,37 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const roleSections: Record<RoleType, NavSection[]> = {
       all: [
         'overview', 'product-health', 'roadmap', 'features', 'requirements',
-        'feedback', 'user-issues', 'feature-requests', 'insights', 'research',
-        'findings', 'user-patterns', 'validation', 'designs', 'figma', 'reviews',
-        'tasks', 'dev-features', 'builds', 'prompts', 'security', 'qa-status',
-        'bugs', 'release-readiness', 'releases', 'incidents', 'maintenance',
-        'context', 'notes', 'files', 'decisions',
+        'feedback', 'user-issues', 'feature-requests', 'insights',
+        'context', 'notes', 'files', 'decisions', 'project-memory',
       ],
-      pm: ['overview', 'roadmap', 'features', 'requirements', 'feedback', 'user-issues', 'feature-requests', 'insights'],
-      designer: ['validation', 'designs', 'figma', 'reviews', 'research', 'findings', 'user-patterns'],
-      dev: ['tasks', 'dev-features', 'builds', 'prompts', 'validation', 'context'],
-      qa: ['security', 'qa-status', 'bugs', 'release-readiness'],
-      ops: ['product-health', 'releases', 'incidents', 'maintenance'],
-      memory: ['context', 'notes', 'files', 'decisions'],
+      pm: [
+        'overview', 'product-health', 'roadmap', 'features', 'requirements',
+        'feedback', 'user-issues', 'feature-requests', 'insights',
+        'context', 'notes', 'files', 'decisions', 'project-memory',
+      ],
+      designer: [
+        'research', 'findings', 'user-patterns',
+        'validation', 'designs', 'figma', 'reviews', 'project-memory',
+      ],
+      dev: [
+        'tasks', 'dev-features', 'builds', 'prompts',
+        'validation', 'context', 'project-memory',
+      ],
+      qa: [
+        'security', 'qa-status', 'bugs', 'release-readiness', 'project-memory',
+      ],
+      ops: [
+        'product-health', 'releases', 'incidents', 'maintenance', 'project-memory',
+      ],
+      memory: [
+        'context', 'notes', 'files', 'decisions', 'project-memory',
+      ],
     };
 
     setActiveSection((current) => {
-      if (role === 'all' || roleSections[role]?.includes(current)) {
-        return current;
+      // If user is currently on the shared Project Memory Ledger, keep them there!
+      if (current === 'project-memory') {
+        return 'project-memory';
       }
       return roleDefaultSections[role] || 'overview';
     });
@@ -524,115 +536,115 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [securityEvidence, setSecurityEvidence] = useState<SecurityEvidence[]>(initialSecurityEvidence);
   const [securityScanEvents, setSecurityScanEvents] = useState<SecurityScanEvent[]>(initialSecurityScanEvents);
 
-  // Cloud Firestore Real-time Synchronizer
-  useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+  // Cross-Role Project Memory & Change Rationale State
+  const [memoryEvents, setMemoryEvents] = useState<ProjectMemoryEvent[]>(initialMemoryEvents);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
+  const [isMemoryDrawerOpen, setIsMemoryDrawerOpen] = useState(false);
 
-    const unsubs: Array<() => void> = [];
+  const openMemoryDrawer = useCallback(
+    (params?: { eventId?: string; entityType?: string; entityId?: string }) => {
+      if (params?.eventId) {
+        setSelectedMemoryId(params.eventId);
+      } else if (params?.entityType && params?.entityId) {
+        const normType = params.entityType.toLowerCase();
+        const normId = params.entityId.toLowerCase();
+        const found = memoryEvents.find(
+          (m) =>
+            (m.entityType.toLowerCase() === normType && m.entityId.toLowerCase() === normId) ||
+            m.links?.some(
+              (l) => l.entityType.toLowerCase() === normType && l.entityId.toLowerCase() === normId
+            )
+        );
+        setSelectedMemoryId(found ? found.id : memoryEvents[0]?.id || null);
+      } else {
+        setSelectedMemoryId(memoryEvents[0]?.id || null);
+      }
+      setIsMemoryDrawerOpen(true);
+    },
+    [memoryEvents]
+  );
 
-    // Subscribe to Dev Tasks
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<DevTask>(
-        activeWorkspace.id,
-        'devTasks',
-        (items) => {
-          if (items && items.length > 0) setDevTasks(items);
-        }
-      )
-    );
+  const closeMemoryDrawer = useCallback(() => {
+    setIsMemoryDrawerOpen(false);
+    setSelectedMemoryId(null);
+  }, []);
 
-    // Subscribe to PRDs
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<ProductRequirement>(
-        activeWorkspace.id,
-        'prds',
-        (items) => {
-          if (items && items.length > 0) setPRDs(items);
-        }
-      )
-    );
+  const recordMemoryEvent = useCallback(
+    (event: Omit<ProjectMemoryEvent, 'id' | 'occurredAt'>) => {
+      const newEvent: ProjectMemoryEvent = {
+        ...event,
+        id: `mem-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        occurredAt: new Date().toISOString().split('T')[0],
+      };
+      setMemoryEvents((prev) => [newEvent, ...prev]);
+      showToast(`Memory recorded: ${newEvent.title}`, 'info');
+    },
+    [showToast]
+  );
 
-    // Subscribe to Feedback
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<FeedbackItem>(
-        activeWorkspace.id,
-        'feedback',
-        (items) => {
-          if (items && items.length > 0) setFeedback(items);
-        }
-      )
-    );
+  const updateMemoryState = useCallback(
+    (eventId: string, state: MemoryState, supersedingEventId?: string) => {
+      setMemoryEvents((prev) =>
+        prev.map((m) =>
+          m.id === eventId
+            ? {
+                ...m,
+                state,
+                supersededByEventId: supersedingEventId || m.supersededByEventId,
+              }
+            : m
+        )
+      );
+      showToast(`Memory status updated to ${state.toUpperCase()}`, 'info');
+    },
+    [showToast]
+  );
 
-    // Subscribe to Decisions
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<ProjectDecision>(
-        activeWorkspace.id,
-        'decisions',
-        (items) => {
-          if (items && items.length > 0) setDecisions(items);
-        }
-      )
-    );
+  const getMemoryForEntity = useCallback(
+    (entityType: string, entityId: string) => {
+      const normType = entityType.toLowerCase();
+      const normId = entityId.toLowerCase();
+      return memoryEvents.filter(
+        (m) =>
+          (m.entityType.toLowerCase() === normType && m.entityId.toLowerCase() === normId) ||
+          m.links?.some(
+            (l) => l.entityType.toLowerCase() === normType && l.entityId.toLowerCase() === normId
+          )
+      );
+    },
+    [memoryEvents]
+  );
 
-    // Subscribe to Second Brain Notes
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<SecondBrainNote>(
-        activeWorkspace.id,
-        'notes',
-        (items) => {
-          if (items && items.length > 0) setSecondBrainNotes(items);
-        }
-      )
-    );
+  const getMemoryTimeline = useCallback(
+    (entityType: string, entityId: string) => {
+      const matches = getMemoryForEntity(entityType, entityId);
+      return [...matches].sort(
+        (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
+      );
+    },
+    [getMemoryForEntity]
+  );
 
-    // Subscribe to Security Findings
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<SecurityFinding>(
-        activeWorkspace.id,
-        'securityFindings',
-        (items) => {
-          if (items && items.length > 0) setSecurityFindings(items);
-        }
-      )
-    );
+  const getMemoriesByRole = useCallback(
+    (role: RoleType) => {
+      if (role === 'all' || role === 'memory') return memoryEvents;
+      return memoryEvents.filter((m) => m.role === role);
+    },
+    [memoryEvents]
+  );
 
-    // Subscribe to QA Test Cases
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<QATestCase>(
-        activeWorkspace.id,
-        'qaTestCases',
-        (items) => {
-          if (items && items.length > 0) setQATestCases(items);
-        }
-      )
-    );
+  const getSupersedingEvent = useCallback(
+    (eventId: string) => {
+      const current = memoryEvents.find((m) => m.id === eventId);
+      if (!current) return undefined;
+      if (current.supersededByEventId) {
+        return memoryEvents.find((m) => m.id === current.supersededByEventId);
+      }
+      return memoryEvents.find((m) => m.supersedesMemoryEventId === eventId);
+    },
+    [memoryEvents]
+  );
 
-    // Subscribe to Bugs
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<BugItem>(
-        activeWorkspace.id,
-        'bugs',
-        (items) => {
-          if (items && items.length > 0) setBugs(items);
-        }
-      )
-    );
-
-    // Subscribe to Context Blocks
-    unsubs.push(
-      firestoreService.subscribeToWorkspaceCollection<ContextBlock>(
-        activeWorkspace.id,
-        'contextBlocks',
-        (items) => {
-          if (items && items.length > 0) setContextBlocks(items);
-        }
-      )
-    );
-
-    return () => {
-      unsubs.forEach((unsub) => unsub());
-    };
-  }, [activeWorkspace.id]);
 
   // 1. Cluster to PRD & Task Promotion Pipeline
   const promoteClusterToPRD = useCallback((clusterId: string) => {
@@ -726,9 +738,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       upvotes: 1,
     };
     setFeedback((prev) => [newItem, ...prev]);
-    firestoreService.saveDocument(activeWorkspace.id, 'feedback', newItem);
     showToast('New user feedback logged to stream', 'success');
-  }, [activeWorkspace.id, showToast]);
+  }, [showToast]);
 
   const addPRD = useCallback((prd: Omit<ProductRequirement, 'id' | 'lastUpdated'>) => {
     const newPRD: ProductRequirement = {
@@ -737,9 +748,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       lastUpdated: new Date().toISOString().split('T')[0],
     };
     setPRDs((prev) => [newPRD, ...prev]);
-    firestoreService.saveDocument(activeWorkspace.id, 'prds', newPRD);
     showToast(`Created PRD ${newPRD.reqCode}`, 'success');
-  }, [activeWorkspace.id, showToast]);
+  }, [showToast]);
 
   // 2. Validation Studio Annotations & Status
   const addAnnotation = useCallback((
@@ -873,9 +883,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setDevTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, status } : t))
     );
-    firestoreService.updateDocument(activeWorkspace.id, 'devTasks', taskId, { status });
     showToast(`Task status updated to ${status.toUpperCase()}`, 'info');
-  }, [activeWorkspace.id, showToast]);
+  }, [showToast]);
 
   const createDevTask = useCallback((task: Omit<DevTask, 'id' | 'taskCode'>) => {
     const taskCode = `DEV-${425 + devTasks.length}`;
@@ -885,9 +894,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       taskCode,
     };
     setDevTasks((prev) => [newTask, ...prev]);
-    firestoreService.saveDocument(activeWorkspace.id, 'devTasks', newTask);
     showToast(`Dev Task ${taskCode} created!`, 'success');
-  }, [activeWorkspace.id, devTasks.length, showToast]);
+  }, [devTasks.length, showToast]);
 
   // 4. QA & Release Readiness
   const toggleQATest = useCallback((testId: string) => {
@@ -934,12 +942,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       detectedAt: 'Just now',
     };
     setBugs((prev) => [newBug, ...prev]);
-    firestoreService.saveDocument(activeWorkspace.id, 'bugs', newBug);
     if (bug.severity === 'Critical P0') {
       setMetrics((m) => ({ ...m, activeP0Issues: m.activeP0Issues + 1 }));
     }
     showToast(`Bug logged: ${bugCode}`, 'error');
-  }, [activeWorkspace.id, bugs.length, showToast]);
+  }, [bugs.length, showToast]);
 
   // 5. Persistent Project Memory OS
   const addSecondBrainNote = useCallback((title: string, rawContent: string, tags: string[]) => {
@@ -952,10 +959,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       tags,
     };
     setSecondBrainNotes((prev) => [newNote, ...prev]);
-    firestoreService.saveDocument(activeWorkspace.id, 'notes', newNote);
     setMetrics((prev) => ({ ...prev, unrefinedNotesCount: prev.unrefinedNotesCount + 1 }));
     showToast('Quick note saved to Second Brain', 'success');
-  }, [activeWorkspace.id, showToast]);
+  }, [showToast]);
 
   const refineNoteWithAI = useCallback((noteId: string) => {
     const note = secondBrainNotes.find((n) => n.id === noteId);
@@ -986,18 +992,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       )
     );
 
-    firestoreService.updateDocument(activeWorkspace.id, 'notes', noteId, {
-      isRefined: true,
-      refinedContent: refined,
-    });
-
     setMetrics((prev) => ({
       ...prev,
       unrefinedNotesCount: Math.max(0, prev.unrefinedNotesCount - 1),
     }));
 
     showToast('Note refined with AI into structured spec!', 'amber');
-  }, [activeWorkspace.id, secondBrainNotes, showToast]);
+  }, [secondBrainNotes, showToast]);
 
   const logDecision = useCallback((decision: Omit<ProjectDecision, 'id' | 'decisionCode' | 'date'>) => {
     const decisionCode = `DEC-${104 + decisions.length}`;
@@ -1008,9 +1009,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       date: new Date().toISOString().split('T')[0],
     };
     setDecisions((prev) => [newDecision, ...prev]);
-    firestoreService.saveDocument(activeWorkspace.id, 'decisions', newDecision);
     showToast(`Architectural Decision ${decisionCode} permanently recorded`, 'success');
-  }, [activeWorkspace.id, decisions.length, showToast]);
+  }, [decisions.length, showToast]);
 
   const addContextBlock = useCallback((block: Omit<ContextBlock, 'id' | 'lastUpdated'>) => {
     const newBlock: ContextBlock = {
@@ -1019,9 +1019,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       lastUpdated: new Date().toISOString().split('T')[0],
     };
     setContextBlocks((prev) => [newBlock, ...prev]);
-    firestoreService.saveDocument(activeWorkspace.id, 'contextBlocks', newBlock);
     showToast('New Context Block added to Project Memory', 'success');
-  }, [activeWorkspace.id, showToast]);
+  }, [showToast]);
 
   // 9. Security Intelligence Layer Actions
   const startSecurityAssessment = useCallback(
@@ -1298,6 +1297,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       acceptFindingRisk,
       createRemediationTaskFromFinding,
       evaluateSecurityGateResult,
+      memoryEvents,
+      selectedMemoryId,
+      isMemoryDrawerOpen,
+      openMemoryDrawer,
+      closeMemoryDrawer,
+      recordMemoryEvent,
+      updateMemoryState,
+      getMemoryForEntity,
+      getMemoryTimeline,
+      getMemoriesByRole,
+      getSupersedingEvent,
     }),
     [
       workspaces,
@@ -1378,6 +1388,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       acceptFindingRisk,
       createRemediationTaskFromFinding,
       evaluateSecurityGateResult,
+      memoryEvents,
+      selectedMemoryId,
+      isMemoryDrawerOpen,
+      openMemoryDrawer,
+      closeMemoryDrawer,
+      recordMemoryEvent,
+      updateMemoryState,
+      getMemoryForEntity,
+      getMemoryTimeline,
+      getMemoriesByRole,
+      getSupersedingEvent,
     ]
   );
 

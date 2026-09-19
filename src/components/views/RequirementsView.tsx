@@ -13,6 +13,8 @@ import {
 import { useProject } from '../../context/ProjectContext';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
+import { MemoryTrigger } from '../memory/MemoryTrigger';
+import { RoleMemoryWidget } from '../memory/RoleMemoryWidget';
 import { ProductRequirement } from '../../types';
 
 export const RequirementsView: React.FC = () => {
@@ -82,6 +84,9 @@ export const RequirementsView: React.FC = () => {
         </button>
       </div>
 
+      {/* Role Memory: Product Decisions & Scope Rationale */}
+      <RoleMemoryWidget role="pm" />
+
       {/* 2-Column Split: PRD List + Active Specification Detail */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: PRD Selector List */}
@@ -134,7 +139,10 @@ export const RequirementsView: React.FC = () => {
                   </p>
 
                   <div className="mt-3 pt-2 border-t border-[#f2f2f2] flex items-center justify-between text-[11px] font-mono text-[#8f8f8f]">
-                    <span>{prd.stage}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{prd.stage}</span>
+                      <MemoryTrigger entityType="prd" entityId={prd.id} variant="compact" />
+                    </div>
                     {prd.originFeedbackCount && (
                       <span className="text-[#0070f3] flex items-center gap-1">
                         <Link className="h-3 w-3" /> {prd.originFeedbackCount} Feedback Origins
@@ -160,6 +168,7 @@ export const RequirementsView: React.FC = () => {
                     </span>
                     <StatusBadge label={selectedPRD.priority} variant={selectedPRD.priority === 'P0' ? 'red' : 'amber'} dot />
                     <StatusBadge label={selectedPRD.stage} variant="neutral" />
+                    <MemoryTrigger entityType="prd" entityId={selectedPRD.id} variant="button" label="Why this changed" />
                   </div>
                   <span className="text-xs font-mono text-[#8f8f8f]">
                     Updated: {selectedPRD.lastUpdated}

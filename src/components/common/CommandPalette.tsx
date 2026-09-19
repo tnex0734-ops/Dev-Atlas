@@ -55,6 +55,7 @@ export const CommandPalette: React.FC = () => {
     switchWorkspace,
     llmModels,
     setActiveLLMModel,
+    openMemoryDrawer,
   } = useProject();
 
   const [query, setQuery] = useState('');
@@ -337,6 +338,46 @@ export const CommandPalette: React.FC = () => {
       icon: <Scale className="h-4 w-4 text-purple-400" />,
       action: () => { setActiveSection('decisions'); setCommandPaletteOpen(false); },
       keywords: 'adr decisions architecture rationale consequences dec-101',
+    },
+    {
+      id: 'view-project-memory',
+      title: 'Project Memory & Change Rationale Stream',
+      category: 'Memory',
+      icon: <BrainCircuit className="h-4 w-4 text-[#c2410c]" />,
+      action: () => { setActiveSection('project-memory'); setCommandPaletteOpen(false); },
+      keywords: 'project memory change rationale why this changed lineage supersession decisions timeline',
+    },
+    {
+      id: 'memory-open-checkout',
+      title: 'Why It Changed: Checkout CTA 16px Spacing',
+      category: 'Memory',
+      icon: <BrainCircuit className="h-4 w-4 text-[#c2410c]" />,
+      action: () => { openMemoryDrawer({ eventId: 'mem-chk-02' }); setCommandPaletteOpen(false); },
+      keywords: 'checkout cta 16px padding why changed usability finding android 14',
+    },
+    {
+      id: 'memory-open-sec-tokens',
+      title: 'Why It Changed: Session Expiry & Refresh Token Rotation',
+      category: 'Memory',
+      icon: <BrainCircuit className="h-4 w-4 text-purple-400" />,
+      action: () => { openMemoryDrawer({ eventId: 'mem-sec-02' }); setCommandPaletteOpen(false); },
+      keywords: 'session expiry 2fa refresh token rotation dec-101 dec-104 security xss',
+    },
+    {
+      id: 'memory-open-pip',
+      title: 'Why It Changed: Picture-in-Picture HUD Collision',
+      category: 'Memory',
+      icon: <BrainCircuit className="h-4 w-4 text-amber-400" />,
+      action: () => { openMemoryDrawer({ eventId: 'mem-pip-01' }); setCommandPaletteOpen(false); },
+      keywords: 'pip picture in picture hud safe area inset z-index figma spec validation pin 04',
+    },
+    {
+      id: 'memory-open-offline',
+      title: 'Why It Changed: Offline Replay Prioritization (Q3)',
+      category: 'Memory',
+      icon: <BrainCircuit className="h-4 w-4 text-blue-400" />,
+      action: () => { openMemoryDrawer({ eventId: 'mem-off-01' }); setCommandPaletteOpen(false); },
+      keywords: 'offline replay fr-01 feature request 4890 upvotes prd-108',
     },
 
     // Roles Switcher Actions

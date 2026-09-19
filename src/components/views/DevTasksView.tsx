@@ -13,6 +13,8 @@ import {
 import { useProject } from '../../context/ProjectContext';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
+import { MemoryTrigger } from '../memory/MemoryTrigger';
+import { RoleMemoryWidget } from '../memory/RoleMemoryWidget';
 import { DevTask, PriorityType } from '../../types';
 
 export const DevTasksView: React.FC = () => {
@@ -92,6 +94,9 @@ export const DevTasksView: React.FC = () => {
         </div>
       </div>
 
+      {/* Role Memory: Engineering & Architecture Decisions */}
+      <RoleMemoryWidget role="dev" />
+
       {/* 4-Column Kanban Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
         {columns.map((col) => {
@@ -126,10 +131,13 @@ export const DevTasksView: React.FC = () => {
                     className="rounded-[8px] border border-[#ebebeb] bg-white p-4 shadow-[0px_1px_2px_rgba(0,0,0,0.04)] hover:border-[#171717] hover:shadow-[0px_2px_4px_rgba(0,0,0,0.06)] transition-all cursor-pointer space-y-3 group"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-semibold text-[#171717] bg-[#f5f5f5] px-2 py-0.5 rounded-[4px] border border-[#ebebeb]">
-                        {task.taskCode}
-                      </span>
-                      <StatusBadge label={task.priority} variant={task.priority === 'P0' ? 'red' : 'amber'} size="sm" />
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-[#171717] bg-[#f5f5f5] px-2 py-0.5 rounded-[4px] border border-[#ebebeb]">
+                          {task.taskCode}
+                        </span>
+                        <StatusBadge label={task.priority} variant={task.priority === 'P0' ? 'red' : 'amber'} size="sm" />
+                      </div>
+                      <MemoryTrigger entityType="task" entityId={task.id} variant="compact" />
                     </div>
 
                     <h4 className="font-sans font-semibold text-sm text-[#171717] group-hover:text-[#0070f3] transition-colors">
@@ -256,16 +264,19 @@ export const DevTasksView: React.FC = () => {
             )}
 
             <div className="flex items-center justify-between pt-3 border-t border-[#ebebeb]">
-              <button
-                onClick={() => {
-                  setSelectedTaskForModal(null);
-                  setActiveSection('prompts');
-                }}
-                className="flex items-center gap-1.5 text-xs font-mono text-[#0070f3] hover:underline"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Inject into AI Prompt Generator</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedTaskForModal(null);
+                    setActiveSection('prompts');
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-mono text-[#0070f3] hover:underline"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Inject into AI Prompt Generator</span>
+                </button>
+                <MemoryTrigger entityType="task" entityId={selectedTaskForModal.id} variant="button" label="Why this changed" />
+              </div>
 
               <button
                 onClick={() => setSelectedTaskForModal(null)}

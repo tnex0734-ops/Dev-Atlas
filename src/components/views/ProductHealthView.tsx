@@ -14,6 +14,7 @@ import {
 import { useProject } from '../../context/ProjectContext';
 import { StatusBadge } from '../common/StatusBadge';
 import { MetricCard } from '../common/MetricCard';
+import { RoleMemoryWidget } from '../memory/RoleMemoryWidget';
 
 export const ProductHealthView: React.FC = () => {
   const { metrics, setActiveSection } = useProject();
@@ -85,6 +86,9 @@ export const ProductHealthView: React.FC = () => {
           <StatusBadge label="Telemetry Polling: 10s Live" variant="green" dot />
         </div>
       </div>
+
+      {/* Role Memory: Ops Decisions & Production Rationale */}
+      <RoleMemoryWidget role="ops" />
 
       {/* Summary KPI grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

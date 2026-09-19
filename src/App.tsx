@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
-import { AuthProvider } from './context/AuthContext';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { CommandPalette } from './components/common/CommandPalette';
 import { ToastContainer } from './components/common/Toast';
-import { AuthModal } from './components/common/AuthModal';
-import { FirebaseConfigModal } from './components/common/FirebaseConfigModal';
 
 import { OverviewView } from './components/views/OverviewView';
 import { ProductHealthView } from './components/views/ProductHealthView';
@@ -39,6 +36,8 @@ import { ContextBlocksView } from './components/views/ContextBlocksView';
 import { SecondBrainView } from './components/views/SecondBrainView';
 import { FileVaultView } from './components/views/FileVaultView';
 import { DecisionsLogView } from './components/views/DecisionsLogView';
+import { ProjectMemoryView } from './components/views/ProjectMemoryView';
+import { MemoryDrawer } from './components/memory/MemoryDrawer';
 
 const MainAppContent: React.FC = () => {
   const { activeSection } = useProject();
@@ -116,6 +115,8 @@ const MainAppContent: React.FC = () => {
         return <FileVaultView />;
       case 'decisions':
         return <DecisionsLogView />;
+      case 'project-memory':
+        return <ProjectMemoryView />;
 
       default:
         return <OverviewView />;
@@ -130,11 +131,8 @@ const MainAppContent: React.FC = () => {
       {/* Toast notifications */}
       <ToastContainer />
 
-      {/* Authentication Modal */}
-      <AuthModal />
-
-      {/* Firebase Backend Config & Sync Diagnostics Modal */}
-      <FirebaseConfigModal />
+      {/* Global Project Memory Drawer */}
+      <MemoryDrawer />
 
       {/* Top Navigation Header */}
       <Header onToggleSidebar={() => setMobileSidebarOpen(!isMobileSidebarOpen)} />
@@ -158,11 +156,9 @@ const MainAppContent: React.FC = () => {
 
 export function App() {
   return (
-    <AuthProvider>
-      <ProjectProvider>
-        <MainAppContent />
-      </ProjectProvider>
-    </AuthProvider>
+    <ProjectProvider>
+      <MainAppContent />
+    </ProjectProvider>
   );
 }
 

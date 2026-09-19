@@ -15,9 +15,12 @@ import { useProject } from '../../context/ProjectContext';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
 
+import { ProjectMemoryView } from './ProjectMemoryView';
+
 export const SecondBrainView: React.FC = () => {
   const { secondBrainNotes, addSecondBrainNote, refineNoteWithAI, setActiveSection } = useProject();
 
+  const [activeTab, setActiveTab] = useState<'notes' | 'memory'>('notes');
   const [isQuickCaptureModalOpen, setQuickCaptureModalOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
   const [quickContent, setQuickContent] = useState('');
@@ -39,29 +42,68 @@ export const SecondBrainView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#ebebeb] pb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <BrainCircuit className="h-5 w-5 text-[#171717]" />
-            <h1 className="font-sans text-2xl sm:text-3xl font-semibold tracking-[-1.28px] text-[#171717]">
-              Second Brain & AI Note Refiner
-            </h1>
-          </div>
-          <p className="mt-1 text-sm text-[#4d4d4d]">
-            Jot down messy, unstructured developer scratchpad thoughts during coding. Trigger AI refinement into structured specs, takeaways, and action items with one click.
-          </p>
-        </div>
+    <div className="space-y-6 animate-fade-in">
+      {/* Tab Switcher: Second Brain Scratchpad vs Central Project Memory */}
+      <div className="flex items-center gap-2 border-b border-[#ebebeb] pb-2">
+        <button
+          onClick={() => setActiveTab('notes')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
+            activeTab === 'notes'
+              ? 'bg-[#171717] text-white shadow-xs'
+              : 'text-[#71717a] hover:text-[#171717] hover:bg-[#f4f4f5]'
+          }`}
+        >
+          <PenTool className="h-3.5 w-3.5" />
+          <span>Scratchpad & AI Refiner</span>
+          <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[10px] font-mono">
+            {secondBrainNotes.length}
+          </span>
+        </button>
 
         <button
-          onClick={() => setQuickCaptureModalOpen(true)}
-          className="flex items-center gap-2 rounded-[6px] bg-[#171717] px-4 py-2.5 text-xs sm:text-sm font-medium text-white hover:bg-[#333333] transition-all shadow-[0px_1px_2px_rgba(0,0,0,0.08)] self-start sm:self-auto"
+          onClick={() => setActiveTab('memory')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
+            activeTab === 'memory'
+              ? 'bg-[#171717] text-white shadow-xs'
+              : 'text-[#71717a] hover:text-[#171717] hover:bg-[#f4f4f5]'
+          }`}
         >
-          <PenTool className="h-4 w-4" />
-          <span>Quick Capture Scratchpad</span>
+          <BrainCircuit className="h-3.5 w-3.5 text-amber-400" />
+          <span>Project Memory & Change Rationale</span>
+          <span className="rounded-full bg-amber-400/20 text-amber-700 px-1.5 py-0.2 text-[10px] font-mono font-semibold">
+            Lineage
+          </span>
         </button>
       </div>
+
+      {activeTab === 'memory' ? (
+        <ProjectMemoryView />
+      ) : (
+        <>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#ebebeb] pb-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <BrainCircuit className="h-5 w-5 text-[#171717]" />
+                <h1 className="font-sans text-2xl sm:text-3xl font-semibold tracking-[-1.28px] text-[#171717]">
+                  Second Brain & AI Note Refiner
+                </h1>
+              </div>
+              <p className="mt-1 text-sm text-[#4d4d4d]">
+                Jot down messy, unstructured developer scratchpad thoughts during coding. Trigger AI refinement into structured specs, takeaways, and action items with one click.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setQuickCaptureModalOpen(true)}
+              className="flex items-center gap-2 rounded-[6px] bg-[#171717] px-4 py-2.5 text-xs sm:text-sm font-medium text-white hover:bg-[#333333] transition-all shadow-[0px_1px_2px_rgba(0,0,0,0.08)] self-start sm:self-auto"
+            >
+              <PenTool className="h-4 w-4" />
+              <span>Quick Capture Scratchpad</span>
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Notes Grid */}
       <div className="space-y-6">

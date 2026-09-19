@@ -19,16 +19,10 @@ import {
   AlertCircle,
   ArrowRight,
   ShieldCheck,
-  Cloud,
-  Database,
-  User,
-  LogOut,
-  LogIn,
   Settings,
   Zap,
 } from 'lucide-react';
 import { useProject } from '../../context/ProjectContext';
-import { useAuth } from '../../context/AuthContext';
 import { RoleType, PlatformType } from '../../types';
 import { githubService, GitHubRepoAnalysis } from '../../services/githubService';
 
@@ -50,22 +44,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
     createWorkspace,
   } = useProject();
 
-  const {
-    user,
-    isAuthenticated,
-    isGuest,
-    cloudSyncStatus,
-    setAuthModalOpen,
-    setConfigModalOpen,
-    signOut,
-  } = useAuth();
-
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [creationMode, setCreationMode] = useState<'github' | 'manual'>('github');
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   // GitHub Real Ingestion State
   const [githubUrl, setGithubUrl] = useState('');
@@ -86,9 +68,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsWorkspaceDropdownOpen(false);
-      }
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
-        setIsUserDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -190,20 +169,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
     { id: 'dev', label: 'Eng', icon: '💻' },
     { id: 'qa', label: 'QA', icon: '🧪' },
     { id: 'ops', label: 'Ops', icon: '🚀' },
-    { id: 'memory', label: 'Memory', icon: '🧠' },
   ];
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b border-[#ebebeb] bg-white/95 px-3 sm:px-4 backdrop-blur-md gap-2">
+      <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b border-[#e5e7eb] bg-white/95 px-3 sm:px-4 backdrop-blur-md gap-2">
         {/* Left: Brand, Sidebar Toggle & Multi-Project Workspace Switcher */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Mobile menu trigger */}
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="rounded-[6px] p-1.5 text-[#8f8f8f] hover:bg-[#f5f5f5] hover:text-[#171717] lg:hidden"
-              aria-label="Toggle mobile drawer"
+              className="rounded-[6px] p-2 text-[#404040] hover:bg-[#f5f5f5] hover:text-[#171717] lg:hidden touch-target flex items-center justify-center"
+              aria-label="Open navigation menu"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -214,9 +192,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             onClick={toggleSidebar}
             className={`hidden lg:flex items-center gap-1 rounded-[6px] border px-2 py-1 text-xs font-mono transition-all ${
               isSidebarOpen
-                ? 'border-[#ebebeb] bg-[#fafafa] text-[#171717] hover:bg-[#f2f2f2]'
+                ? 'border-[#e5e7eb] bg-[#fafafa] text-[#171717] hover:bg-[#f2f2f2]'
                 : 'border-[#171717] bg-[#171717] text-white shadow-xs'
             }`}
+            aria-label={isSidebarOpen ? 'Hide left navigation bar' : 'Show left navigation bar'}
             title={isSidebarOpen ? 'Hide left navigation bar' : 'Show left navigation bar'}
           >
             {isSidebarOpen ? (
@@ -236,11 +215,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           <div
             onClick={() => setActiveSection('overview')}
             className="flex items-center gap-1.5 cursor-pointer group shrink-0"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setActiveSection('overview');
+              }
+            }}
+            aria-label="Go to Overview dashboard"
           >
             <div className="flex h-6 w-6 items-center justify-center rounded-[5px] bg-[#171717] text-white font-bold transition-transform group-hover:scale-105">
               <span className="text-[10px]">▲</span>
             </div>
-            <span className="font-sans font-semibold tracking-tight text-[#171717] text-sm hidden sm:inline">
+            <span className="font-sans font-bold tracking-tight text-[#171717] text-sm hidden sm:inline">
               Dev Atlas
             </span>
           </div>
@@ -249,27 +236,29 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-              className="flex items-center gap-1.5 rounded-[6px] border border-[#ebebeb] bg-[#fafafa] px-2 py-1 text-xs text-[#171717] hover:border-[#171717] transition-all max-w-[150px] sm:max-w-[180px]"
+              className="flex items-center gap-1.5 rounded-[6px] border border-[#e5e7eb] bg-[#fafafa] px-2 py-1 text-xs text-[#171717] hover:border-[#171717] transition-all max-w-[150px] sm:max-w-[180px]"
+              aria-label="Switch project workspace or create a new project"
+              aria-expanded={isWorkspaceDropdownOpen}
               title="Switch project workspace or create a new project"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-[#10b981] shrink-0" />
               <div className="flex items-center gap-1 truncate">
-                <span className="font-mono text-[9px] font-semibold bg-[#ebebeb] px-1 py-0.2 rounded text-[#171717] shrink-0">
+                <span className="font-mono text-[9px] font-semibold bg-[#e5e7eb] px-1 py-0.2 rounded text-[#171717] shrink-0">
                   {activeWorkspace.code}
                 </span>
-                <span className="font-medium text-[11px] truncate">
+                <span className="font-medium text-[11px] truncate text-[#171717]">
                   {activeWorkspace.name}
                 </span>
               </div>
-              <ChevronDown className="h-3 w-3 text-[#8f8f8f] shrink-0 ml-auto" />
+              <ChevronDown className="h-3 w-3 text-[#525252] shrink-0 ml-auto" />
             </button>
 
             {/* Dropdown Menu */}
             {isWorkspaceDropdownOpen && (
-              <div className="absolute left-0 mt-1.5 w-80 rounded-[8px] border border-[#ebebeb] bg-white p-2 shadow-xl z-50 animate-scale-in">
-                <div className="px-2 py-1.5 text-[11px] font-mono font-semibold uppercase text-[#8f8f8f] flex items-center justify-between">
+              <div className="absolute left-0 mt-1.5 w-80 rounded-[8px] border border-[#e5e7eb] bg-white p-2 shadow-xl z-50 animate-scale-in">
+                <div className="px-2 py-1.5 text-[11px] font-mono font-semibold uppercase text-[#525252] flex items-center justify-between">
                   <span>Project Workspaces ({workspaces.length})</span>
-                  <span className="text-[#047857] text-[10px]">Active</span>
+                  <span className="text-[#047857] text-[10px] font-bold">Active</span>
                 </div>
 
                 <div className="space-y-1 my-1 max-h-64 overflow-y-auto">
@@ -284,7 +273,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                         }}
                         className={`flex w-full items-start gap-2.5 rounded-[6px] p-2 text-left transition-all ${
                           isSelected
-                            ? 'bg-[#fafafa] border border-[#ebebeb] shadow-xs'
+                            ? 'bg-[#fafafa] border border-[#e5e7eb] shadow-xs'
                             : 'hover:bg-[#f5f5f5]'
                         }`}
                       >
@@ -300,8 +289,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                               <Check className="h-3.5 w-3.5 text-[#047857] shrink-0 ml-1" />
                             )}
                           </div>
-                          <p className="text-[10px] text-[#8f8f8f] truncate">{ws.tagline}</p>
-                          <div className="mt-1 flex items-center gap-2 text-[9px] font-mono text-[#8f8f8f]">
+                          <p className="text-[10px] text-[#525252] truncate font-medium">{ws.tagline}</p>
+                          <div className="mt-1 flex items-center gap-2 text-[9px] font-mono text-[#525252]">
                             <span>{ws.version}</span>
                             <span>•</span>
                             <span>{ws.platform}</span>
@@ -314,16 +303,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                   })}
                 </div>
 
-                <div className="border-t border-[#ebebeb] pt-1.5 mt-1">
+                <div className="border-t border-[#e5e7eb] pt-1.5 mt-1">
                   <button
                     onClick={() => {
                       setIsCreateModalOpen(true);
                       setIsWorkspaceDropdownOpen(false);
                     }}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-[6px] border border-dashed border-[#ebebeb] bg-[#fafafa] py-1.5 text-xs font-medium text-[#171717] hover:border-[#171717] hover:bg-white transition-all"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-[6px] border border-dashed border-[#d4d4d8] bg-[#fafafa] py-1.5 text-xs font-medium text-[#171717] hover:border-[#171717] hover:bg-white transition-all"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>Import Real GitHub Repo / Workspace</span>
+                    <span>Import GitHub Repository</span>
                   </button>
                 </div>
               </div>
@@ -331,20 +320,21 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           </div>
         </div>
 
-        {/* Center: Top Navbar Role Navigation Options (Pill Switcher) */}
-        <nav aria-label="Role Perspectives" className="hidden lg:flex items-center rounded-full bg-[#f4f4f5] p-0.5 border border-[#e4e4e7] gap-0.5 shrink-0">
+        {/* Center: Top Navbar Role Navigation Options (Pill Switcher - Responsive across desktop, tablet & mobile) */}
+        <nav aria-label="Role Perspectives" className="flex items-center overflow-x-auto no-scrollbar rounded-full bg-[#f4f4f5] p-0.5 border border-[#e4e4e7] gap-0.5 shrink-0 max-w-[200px] xs:max-w-[260px] sm:max-w-none">
           {roleTabs.map((role) => {
             const isActive = activeRole === role.id;
             return (
               <button
                 key={role.id}
                 onClick={() => selectRole(role.id)}
-                className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap transition-all ${
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-all touch-target ${
                   isActive
-                    ? 'bg-[#171717] text-white shadow-xs font-semibold'
-                    : 'text-[#71717a] hover:text-[#171717] hover:bg-white/60'
+                    ? 'bg-[#171717] text-white shadow-xs font-bold'
+                    : 'text-[#404040] hover:text-[#171717] hover:bg-white/80 font-semibold'
                 }`}
-                title={`View ${role.label} options in left navigation`}
+                aria-label={`Switch to ${role.label} perspective`}
+                title={`Switch to ${role.label} perspective`}
               >
                 <span>{role.label}</span>
               </button>
@@ -352,44 +342,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           })}
         </nav>
 
-        {/* Right: Universal ⌘K Search, Quick Note, Cloud Status & User Auth */}
+        {/* Right: Universal ⌘K Search, Quick Note, & User Profile */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Cloud Sync Status Indicator */}
-          <div
-            className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border ${
-              cloudSyncStatus === 'connected'
-                ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800'
-                : cloudSyncStatus === 'syncing'
-                ? 'border-blue-200 bg-blue-50/90 text-blue-800'
-                : 'border-amber-200 bg-amber-50/90 text-amber-800'
-            }`}
-            title={cloudSyncStatus === 'connected' ? 'Connected to Cloud Firestore' : 'Running in Local Mode'}
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                cloudSyncStatus === 'connected'
-                  ? 'bg-emerald-500 animate-pulse'
-                  : cloudSyncStatus === 'syncing'
-                  ? 'bg-blue-500 animate-spin'
-                  : 'bg-amber-500'
-              }`}
-            />
-            <span className="hidden xl:inline">
-              {cloudSyncStatus === 'connected' ? 'Cloud' : cloudSyncStatus === 'syncing' ? 'Sync' : 'Local'}
-            </span>
-          </div>
-
-          <div className="h-3.5 w-px bg-[#ebebeb] hidden sm:block" />
-
           {/* Search Trigger */}
           <button
             onClick={() => setCommandPaletteOpen(true)}
-            className="flex items-center gap-1.5 rounded-[6px] border border-[#ebebeb] bg-[#fafafa] px-2 py-1 text-xs text-[#8f8f8f] hover:border-[#171717] hover:text-[#171717] transition-all"
+            className="flex items-center gap-1.5 rounded-[6px] border border-[#e5e7eb] bg-[#fafafa] px-2.5 py-1 text-xs text-[#525252] hover:border-[#171717] hover:text-[#171717] transition-all"
+            aria-label="Search and command palette (Command + K)"
             title="Search (⌘K)"
           >
             <Search className="h-3.5 w-3.5" />
-            <span className="hidden md:inline text-[11px]">Search</span>
-            <kbd className="hidden sm:inline-flex items-center rounded-[3px] border border-[#ebebeb] bg-white px-1 text-[9px] font-mono text-[#8f8f8f]">
+            <span className="hidden md:inline text-[11px] font-medium">Search</span>
+            <kbd className="hidden sm:inline-flex items-center rounded-[3px] border border-[#d4d4d8] bg-white px-1 text-[9px] font-mono text-[#525252] font-semibold">
               ⌘K
             </kbd>
           </button>
@@ -397,10 +361,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           {/* Scratchpad (Desktop Extra) */}
           <button
             onClick={() => setActiveSection('notes')}
-            className="hidden 2xl:flex items-center gap-1 rounded-[6px] border border-[#ebebeb] bg-white px-2 py-1 text-xs font-medium text-[#171717] hover:bg-[#fafafa] transition-all"
+            className="hidden 2xl:flex items-center gap-1 rounded-[6px] border border-[#e5e7eb] bg-white px-2 py-1 text-xs font-medium text-[#171717] hover:bg-[#fafafa] transition-all"
+            aria-label="Open scratchpad notes"
             title="Scratchpad"
           >
-            <PenTool className="h-3 w-3 text-[#8f8f8f]" />
+            <PenTool className="h-3 w-3 text-[#525252]" />
             <span className="text-[11px]">Notes</span>
           </button>
 
@@ -408,89 +373,26 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           <button
             onClick={() => setActiveSection('prompts')}
             className="flex items-center gap-1 rounded-[6px] bg-[#171717] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#333333] transition-all shadow-xs"
+            aria-label="Open AI Prompt Studio"
             title="AI Prompt Studio"
           >
             <Sparkles className="h-3 w-3 text-amber-300" />
             <span className="text-[11px] hidden sm:inline">AI Studio</span>
           </button>
 
-          <div className="h-3.5 w-px bg-[#ebebeb]" />
+          <div className="h-3.5 w-px bg-[#e5e7eb]" />
 
-          {/* User Account / Sign In Dropdown */}
-          <div className="relative" ref={userDropdownRef}>
-            {user ? (
-              <button
-                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="flex items-center gap-1.5 rounded-[6px] border border-[#ebebeb] bg-white p-1 hover:border-[#171717] transition-all"
-                title={user.displayName || user.email || 'User Profile'}
-              >
-                {user.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt={user.displayName || 'User'}
-                    className="w-5 h-5 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold">
-                    {(user.displayName || user.email || 'U')[0].toUpperCase()}
-                  </div>
-                )}
-                <span className="hidden xl:inline text-[11px] font-medium text-neutral-800 max-w-[80px] truncate">
-                  {user.displayName || user.email?.split('@')[0]}
-                </span>
-                <ChevronDown className="h-3 w-3 text-neutral-400" />
-              </button>
-            ) : (
-              <button
-                onClick={() => setAuthModalOpen(true)}
-                className="flex items-center gap-1 rounded-[6px] bg-[#171717] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#333333] transition-all"
-              >
-                <LogIn className="h-3.5 w-3.5" />
-                <span className="text-[11px]">Sign In</span>
-              </button>
-            )}
-
-            {/* User Dropdown Menu */}
-            {isUserDropdownOpen && user && (
-              <div className="absolute right-0 mt-1.5 w-64 rounded-xl border border-[#ebebeb] bg-white p-2 shadow-2xl z-50 animate-scale-in text-xs">
-                <div className="p-2 border-b border-neutral-100 mb-1">
-                  <div className="font-semibold text-neutral-900 truncate">
-                    {user.displayName || 'Dev Atlas Pilot'}
-                  </div>
-                  <div className="text-[11px] text-neutral-500 font-mono truncate">
-                    {user.email || (user.isAnonymous ? 'Guest / Anonymous Mode' : user.uid)}
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-1">
-                    <span
-                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                        user.isAnonymous
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {user.isAnonymous ? 'Guest Session' : 'Authenticated'}
-                    </span>
-                    <span className="text-[10px] text-neutral-400">
-                      • {activeWorkspace.code}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-0.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setIsUserDropdownOpen(false);
-                      await signOut();
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-left font-medium"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              </div>
-            )}
+          {/* Workspace Lead Profile Badge */}
+          <div
+            className="flex items-center gap-1.5 rounded-[6px] border border-[#e5e7eb] bg-white px-2 py-1"
+            title={`Workspace Lead: ${activeWorkspace.owner || 'Lead Architect'}`}
+          >
+            <div className="w-5 h-5 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold">
+              {(activeWorkspace.owner || 'A')[0].toUpperCase()}
+            </div>
+            <span className="hidden xl:inline text-[11px] font-semibold text-neutral-800 max-w-[80px] truncate">
+              {activeWorkspace.owner?.split(' ')[0] || 'Lead'}
+            </span>
           </div>
         </div>
       </header>

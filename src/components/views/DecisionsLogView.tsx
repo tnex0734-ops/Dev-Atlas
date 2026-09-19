@@ -12,6 +12,7 @@ import {
 import { useProject } from '../../context/ProjectContext';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
+import { MemoryTrigger } from '../memory/MemoryTrigger';
 import { ProjectDecision } from '../../types';
 
 export const DecisionsLogView: React.FC = () => {
@@ -102,6 +103,7 @@ export const DecisionsLogView: React.FC = () => {
                     {dec.decisionCode}
                   </span>
                   <StatusBadge label={dec.category} variant="purple" size="sm" />
+                  <MemoryTrigger entityType="decision" entityId={dec.id} variant="compact" />
                 </div>
                 <h3 className="mt-2.5 font-sans font-semibold text-xl text-[#171717]">
                   {dec.title}

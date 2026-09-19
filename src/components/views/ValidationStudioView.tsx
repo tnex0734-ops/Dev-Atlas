@@ -21,6 +21,8 @@ import {
 import { useProject } from '../../context/ProjectContext';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
+import { MemoryTrigger } from '../memory/MemoryTrigger';
+import { RoleMemoryWidget } from '../memory/RoleMemoryWidget';
 import { DesignAnnotation } from '../../types';
 
 export const ValidationStudioView: React.FC = () => {
@@ -144,6 +146,8 @@ export const ValidationStudioView: React.FC = () => {
             ))}
           </select>
 
+          <MemoryTrigger entityType="validation" entityId={currentSession.id} variant="button" label="Why this changed" />
+
           {/* View Mode Switcher */}
           <div className="flex items-center rounded-full bg-[#f5f5f5] p-1 border border-[#ebebeb]">
             <button
@@ -192,6 +196,9 @@ export const ValidationStudioView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Role Memory: Design Decisions & Spec Rationale */}
+      <RoleMemoryWidget role="designer" />
 
       {/* Session Metadata & Workflow Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[12px] border border-[#ebebeb] bg-white p-4 shadow-[0px_1px_2px_rgba(0,0,0,0.04)]">

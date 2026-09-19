@@ -28,6 +28,7 @@ import { useProject } from '../../context/ProjectContext';
 import { MetricCard } from '../common/MetricCard';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
+import { RoleMemoryWidget } from '../memory/RoleMemoryWidget';
 import { SecurityFinding, SecurityEvidence, SecurityScanEvent } from '../../types';
 
 export const SecurityCommandCenterView: React.FC = () => {
@@ -213,6 +214,9 @@ export const SecurityCommandCenterView: React.FC = () => {
           )}
         </button>
       </div>
+
+      {/* Role Memory: QA Decisions & Verification Lineage */}
+      <RoleMemoryWidget role="qa" />
 
       {/* Top Summary Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">

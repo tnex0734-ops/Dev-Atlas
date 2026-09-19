@@ -43,7 +43,8 @@ export type NavSection =
   | 'context'
   | 'notes'
   | 'files'
-  | 'decisions';
+  | 'decisions'
+  | 'project-memory';
 
 export type SentimentType = 'positive' | 'neutral' | 'negative';
 export type PlatformType = 'Android' | 'iOS' | 'Mobile' | 'Web' | 'Cross-Platform' | 'Backend / Cloud';
@@ -627,5 +628,100 @@ export interface LLMModelTarget {
 }
 
 export type PromptOptimizationMode = 'full-context' | 'token-economy' | 'security-hardened' | 'tdd-verification';
+
+// ==========================================
+// 10. Cross-Role Project Memory & Change Rationale System
+// ==========================================
+
+export type MemoryEventType =
+  | 'created'
+  | 'changed'
+  | 'decision'
+  | 'approved'
+  | 'rejected'
+  | 'tested'
+  | 'released'
+  | 'incident'
+  | 'rolled-back'
+  | 'deprecated'
+  | 'superseded'
+  | 'validated'
+  | 'reopened';
+
+export type MemoryState =
+  | 'proposed'
+  | 'active'
+  | 'validated'
+  | 'superseded'
+  | 'rolled-back'
+  | 'deprecated'
+  | 'rejected'
+  | 'blocked'
+  | 'unknown';
+
+export interface MemoryFieldChange {
+  field: string;
+  label: string;
+  before?: string;
+  after?: string;
+}
+
+export interface MemoryMetricImpact {
+  metric: string;
+  before?: number;
+  after?: number;
+  delta?: number;
+  unit?: string;
+  direction?: 'positive' | 'negative' | 'neutral' | 'unknown';
+  measurementWindow?: string;
+  source?: string;
+}
+
+export interface MemoryLink {
+  entityType: string;
+  entityId: string;
+  label: string;
+  targetSection?: NavSection;
+}
+
+export interface ProjectMemoryEvent {
+  id: string;
+  eventType: MemoryEventType;
+  state: MemoryState;
+  title: string;
+  summary: string;
+
+  // What changed
+  entityType: string;
+  entityId: string;
+  entityLabel: string;
+  fieldChanges?: MemoryFieldChange[];
+
+  // Why / decision context
+  whyChanged?: string;
+  decision?: string;
+  alternativesConsidered?: string[];
+  evidence?: string[];
+
+  // Impact
+  expectedImpact?: string;
+  observedImpact?: MemoryMetricImpact[];
+  impactSummary?: string;
+
+  // Ownership / chronology
+  author: string;
+  role: RoleType | string;
+  occurredAt: string;
+
+  // Relationships & Lineage
+  links?: MemoryLink[];
+  previousMemoryEventId?: string;
+  supersedesMemoryEventId?: string;
+  supersededByEventId?: string;
+
+  // Truthfulness / data provenance
+  source: 'manual' | 'system' | 'seed';
+  rationaleRecorded: boolean;
+}
 
 
