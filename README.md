@@ -5,6 +5,7 @@
 
 <div align="center">
 
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed-devatlas--lake.vercel.app-black?style=for-the-badge&logo=vercel&logoColor=white)](https://devatlas-lake.vercel.app/?role=all&section=overview)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.1.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -14,9 +15,12 @@
 [![WCAG AA](https://img.shields.io/badge/WCAG-AA%20Compliant-success?style=for-the-badge)](#-design-system--accessibility-wcag-aa)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-[**Live Demo**](https://github.com/tnex0734-ops/Dev-Atlas) • [**System Architecture**](#-system-architecture) • [**Role System**](#-the-7-role-operating-system) • [**Views Catalog**](#-catalog-of-all-34-specialized-domain-views) • [**Quickstart**](#-getting-started--local-development) • [**2-Min Demo Walkthrough**](#-2-minute-demonstration--pitch-walkthrough)
+[**🌐 Live Application**](https://devatlas-lake.vercel.app/?role=all&section=overview) • [**GitHub Repository**](https://github.com/tnex0734-ops/Dev-Atlas) • [**System Architecture**](#-system-architecture) • [**Role System**](#-the-7-role-operating-system) • [**Views Catalog**](#-catalog-of-all-34-specialized-domain-views) • [**Quickstart**](#-getting-started--local-development) • [**2-Min Demo Walkthrough**](#-2-minute-demonstration--pitch-walkthrough)
 
 </div>
+
+> [!TIP]
+> **🚀 Live Production Deployment:** Access the fully interactive live application at **[https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview)**. Experience the zero-latency responsive UI, 34 domain views, and grounded project AI directly in your browser without any local setup.
 
 ---
 
@@ -87,7 +91,7 @@ Modern software engineering organizations suffer from severe **Institutional Amn
                  └───────────────────────────┘
 ```
 
-1. **Ephemeral Discussions & Evaporated Decisions:** Critical architectural trade-offs, scope revisions, and business constraints are hashed out in Zoom/Meet syncs or buried in Slack threads. Within weeks, the reasoning evaporates, leaving behind unexplained legacy code that no engineer dares refactor.
+1. **Disconnected Silos & Evaporated Decisions:** Critical architectural trade-offs, scope revisions, and business constraints are hashed out in Zoom/Meet syncs or buried in Slack threads. Within weeks, the reasoning evaporates, leaving behind unexplained legacy code that no engineer dares refactor.
 2. **The Lost "Why" of Engineering Tasks:** Engineers see a Jira or Linear ticket (e.g., *"Migrate session store to HttpOnly cookies"*), but have no record of *why* it was prioritized, *which* incident or security finding mandated it, or *what* Architectural Decision Record (ADR) governs its constraints.
 3. **Generic AI Hallucinations:** Off-the-shelf AI assistants (ChatGPT, generic coding extensions) have zero institutional memory. They hallucinate architectural constraints, invent non-existent team consensus, and recommend libraries that violate established ADRs.
 4. **Cross-Discipline Fragmentation:** Product Managers, UX Designers, Developers, QA Engineers, and DevOps/SREs operate in isolated software silos with divergent vocabularies, causing costly rework, missed edge cases, and regressed requirements.
@@ -834,7 +838,7 @@ Signalslab/Signalslab/ (Git Repository Root: https://github.com/tnex0734-ops/Dev
     │   │   ├── IconBadge3D.tsx      # 3D icon container
     │   │   ├── OnboardingBanner.tsx # Dismissable welcome journey
     │   │   └── BrandLogos.tsx       # Platform SVG icons (Play, App Store, Discord)
-    │   └── views/                   # 34 Specialized Domain Screens
+    │   └── views/                  # 34 Specialized Domain Screens
     │
     └── __tests__/                   # Automated Vitest Test Suite (28 Tests)
         ├── connectorService.test.ts # Transcript regex parsing tests
@@ -846,6 +850,10 @@ Signalslab/Signalslab/ (Git Repository Root: https://github.com/tnex0734-ops/Dev
 ---
 
 ## 🚀 Getting Started & Local Development
+
+### 🌐 Live Production Demo
+If you want to evaluate DevAtlas immediately without installing dependencies locally, access the live deployment:  
+👉 **[https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview)**
 
 ### Prerequisites
 - **Node.js** `≥ 18.0.0`
@@ -929,7 +937,10 @@ npm run test -- --coverage
 
 ## 🚢 Deployment Guide
 
-### Option 1: Vercel (Recommended)
+### Option 1: Vercel (Active Production Deployment)
+
+- **Production URL:** [https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview)
+- **Status:** Live & Operational ✅
 
 The repository includes a pre-configured [`vercel.json`](vercel.json):
 
@@ -1045,7 +1056,7 @@ export interface ProjectMeeting {
 
 To experience the intended DevAtlas product journey:
 
-1. **Enter Project Overview (`http://localhost:5173`)**:
+1. **Enter Project Overview ([Live URL](https://devatlas-lake.vercel.app/?role=all&section=overview) or `http://localhost:5173`)**:
    - Inspect the **Onboarding Banner** explaining the 5-point DevAtlas mental model.
    - Review the **3D telemetry cards** (Done: 18, In Progress: 6, Blocked: 3) and composite sprint health ring (94%).
    - Review the **Recent Discussions & Syncs** card showing `MTG-024`.
