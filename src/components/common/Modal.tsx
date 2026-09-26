@@ -76,7 +76,7 @@ export const Modal: React.FC<ModalProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '24px',
+          padding: '20px 16px',
           overflowY: 'auto',
           pointerEvents: 'none',
         }}
@@ -90,11 +90,14 @@ export const Modal: React.FC<ModalProps> = ({
             maxWidth: maxWidthMap[maxWidth] || '672px',
             borderRadius: '16px',
             backgroundColor: '#ffffff',
-            border: '1px solid #ebebeb',
-            boxShadow: '0px 8px 30px rgba(0, 0, 0, 0.12)',
+            border: '1px solid #EBE5DC',
+            boxShadow: '0px 12px 36px rgba(0, 0, 0, 0.12)',
             pointerEvents: 'auto',
             margin: 'auto',
             animation: 'modal-scale-in 0.15s ease-out',
+            maxHeight: '92vh',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {/* Header */}
@@ -103,20 +106,21 @@ export const Modal: React.FC<ModalProps> = ({
               display: 'flex',
               alignItems: 'flex-start',
               justifyContent: 'space-between',
-              borderBottom: '1px solid #ebebeb',
-              padding: '20px 24px',
+              borderBottom: '1px solid #EBE5DC',
+              padding: '18px 24px',
               backgroundColor: '#ffffff',
               borderRadius: '16px 16px 0 0',
+              flexShrink: 0,
             }}
           >
             <div>
               <h3
                 style={{
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: '"Space Grotesk", -apple-system, sans-serif',
                   fontSize: '1.125rem',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   letterSpacing: '-0.02em',
-                  color: '#171717',
+                  color: '#18181b',
                   margin: 0,
                 }}
               >
@@ -126,10 +130,10 @@ export const Modal: React.FC<ModalProps> = ({
                 <p
                   style={{
                     fontSize: '0.75rem',
-                    color: '#8f8f8f',
-                    fontFamily: 'monospace',
-                    lineHeight: '1.6',
-                    marginTop: '4px',
+                    color: '#71717a',
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    lineHeight: '1.5',
+                    marginTop: '3px',
                     marginBottom: 0,
                   }}
                 >
@@ -140,11 +144,11 @@ export const Modal: React.FC<ModalProps> = ({
             <button
               onClick={onClose}
               style={{
-                borderRadius: '6px',
+                borderRadius: '8px',
                 padding: '6px',
-                color: '#8f8f8f',
-                background: 'transparent',
-                border: 'none',
+                color: '#71717a',
+                backgroundColor: '#FAF7F2',
+                border: '1px solid #EBE5DC',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -152,12 +156,12 @@ export const Modal: React.FC<ModalProps> = ({
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#171717';
-                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                e.currentTarget.style.color = '#18181b';
+                e.currentTarget.style.borderColor = '#FF6039';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = '#8f8f8f';
-                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#71717a';
+                e.currentTarget.style.borderColor = '#EBE5DC';
               }}
             >
               <X style={{ height: '16px', width: '16px' }} />
@@ -168,9 +172,9 @@ export const Modal: React.FC<ModalProps> = ({
           <div
             style={{
               padding: '20px 24px',
-              maxHeight: '75vh',
               overflowY: 'auto',
-              color: '#171717',
+              color: '#18181b',
+              flex: 1,
             }}
           >
             {children}

@@ -183,44 +183,44 @@ export const RecordRationaleModal: React.FC<RecordRationaleModalProps> = ({
               value={whyChanged}
               onChange={(e) => setWhyChanged(e.target.value)}
               placeholder="Explain the underlying user friction, technical constraint, usability finding, or business priority..."
-              className="w-full rounded-[6px] border border-[#e4e4e7] px-3 py-2 text-xs focus:border-[#171717] focus:outline-none"
+              className="w-full rounded-[6px] border border-[#e5e7eb] px-3 py-2 text-xs text-[#161616] focus:border-[#FF6039] focus:ring-1 focus:ring-[#FF6039] focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block font-medium text-[#171717] mb-1">Decision / Intent Taken</label>
+            <label className="block font-bold text-[#161616] mb-1">Decision / Intent Taken</label>
             <input
               type="text"
               value={decision}
               onChange={(e) => setDecision(e.target.value)}
               placeholder="What was explicitly decided?"
-              className="w-full rounded-[6px] border border-[#e4e4e7] px-3 py-2 text-xs focus:border-[#171717] focus:outline-none"
+              className="w-full rounded-[6px] border border-[#e5e7eb] px-3 py-2 text-xs text-[#161616] focus:border-[#FF6039] focus:ring-1 focus:ring-[#FF6039] focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block font-medium text-[#171717] mb-1">Expected Impact</label>
+            <label className="block font-bold text-[#161616] mb-1">Expected Impact</label>
             <input
               type="text"
               value={expectedImpact}
               onChange={(e) => setExpectedImpact(e.target.value)}
               placeholder="e.g. Improve tap usability and reduce checkout drop-off"
-              className="w-full rounded-[6px] border border-[#e4e4e7] px-3 py-2 text-xs focus:border-[#171717] focus:outline-none"
+              className="w-full rounded-[6px] border border-[#e5e7eb] px-3 py-2 text-xs text-[#161616] focus:border-[#FF6039] focus:ring-1 focus:ring-[#FF6039] focus:outline-none"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#ebebeb]">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e5e7eb]">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-[6px] border border-[#e4e4e7] px-3 py-1.5 font-medium text-[#52525b] hover:bg-[#fafafa]"
+              className="btn-secondary-dark"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#171717] px-4 py-1.5 font-medium text-white hover:bg-[#333333] shadow-xs"
+              className="btn-primary-orange"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Save to Project Memory</span>

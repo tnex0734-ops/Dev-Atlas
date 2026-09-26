@@ -4,28 +4,33 @@
 
 @layer base {
   :root {
-    --text-primary: #171717;
-    --text-secondary: #4b5563; /* High contrast secondary (WCAG AAA on white: 7.0:1) */
-    --text-muted: #525252;     /* Accessible muted text (WCAG AA on white: 5.9:1) */
-    --border-subtle: #e5e7eb;
-    --border-card: #e5e7eb;
-    --bg-page: #fafafa;
-    --bg-card: #ffffff;
+    --color-primary: #FF6039;
+    --color-primary-hover: #E54D26;
+    --color-primary-subtle: #FFF0EC;
+    --color-dark: #161616;
+    --color-dark-surface: #1F1F1F;
+    --text-primary: #18181b;
+    --text-secondary: #52525b; /* High contrast secondary */
+    --text-muted: #71717a;     /* Accessible muted text */
+    --border-subtle: #EBE5DC;
+    --border-card: #EBE5DC;
+    --bg-page: #FAF7F2;
+    --bg-card: #FFFFFF;
   }
 
   body {
-    @apply bg-[#fafafa] text-[#171717] antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif;
-    color: #171717;
-    background-color: #fafafa;
+    @apply bg-[#FAF7F2] text-[#18181b] antialiased;
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif;
+    color: #18181b;
+    background-color: #FAF7F2;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Global Keyboard Accessibility: High-contrast focus rings */
+  /* Global Keyboard Accessibility: High-contrast focus rings with orange accent */
   *:focus-visible {
-    @apply outline-none ring-2 ring-[#171717] ring-offset-2 ring-offset-white;
+    @apply outline-none ring-2 ring-[#FF6039] ring-offset-2 ring-offset-white;
   }
 
   /* Accessible smooth scrollbars */
@@ -46,9 +51,42 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #a1a1aa;
   }
+
+  /* Anti-slop: Honor prefers-reduced-motion for all UI transitions */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {
+  /* Card Levels (VDS 3-Tier Hierarchy with Creme Harmony) */
+  .card-level-1 {
+    @apply rounded-[14px] border border-[#EBE5DC] bg-white p-5 shadow-[0px_2px_4px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#FF6039]/50 hover:shadow-[0px_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 cursor-pointer;
+  }
+
+  .card-level-2 {
+    @apply rounded-[14px] border border-[#FF6039]/40 bg-[#FFF9F6] p-5 shadow-[0px_2px_8px_rgba(255,96,57,0.06)] ring-1 ring-[#FF6039]/20 transition-all duration-200 hover:shadow-[0px_8px_20px_rgba(255,96,57,0.10)] hover:-translate-y-0.5 cursor-pointer;
+  }
+
+  .card-level-3 {
+    @apply rounded-[18px] border border-[#2e2e2e] bg-[#161616] text-white p-6 sm:p-8 shadow-[0px_8px_32px_rgba(0,0,0,0.25)] relative overflow-hidden transition-all duration-200 hover:shadow-[0px_12px_36px_rgba(0,0,0,0.3)];
+  }
+
+  /* Primary Orange Action Button (#161616 on #FF6039 for WCAG contrast compliance) */
+  .btn-primary-orange {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-[#FF6039] hover:bg-[#E54D26] px-5 py-2.5 text-xs sm:text-sm font-bold text-[#161616] hover:shadow-[0px_4px_16px_rgba(255,96,57,0.25)] hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer touch-target;
+  }
+
+  /* Dark Secondary Action Button */
+  .btn-secondary-dark {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-[#EBE5DC] bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-[#18181b] hover:bg-[#FAF7F2] hover:border-[#FF6039]/50 hover:text-[#FF6039] active:scale-[0.98] transition-all touch-target cursor-pointer shadow-sm;
+  }
+
   /* High-contrast accessible text helper classes */
   .text-accessible-secondary {
     color: #4b5563 !important;
@@ -63,4 +101,32 @@
     min-height: 40px;
     min-width: 40px;
   }
+
+  /* AI Studio animations */
+  .ai-slide-in {
+    animation: aiSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .ai-fade-in {
+    animation: aiFadeIn 0.2s ease-out forwards;
+  }
 }
+
+@keyframes aiSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes aiFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+

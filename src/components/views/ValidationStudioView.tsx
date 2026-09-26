@@ -116,18 +116,18 @@ export const ValidationStudioView: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Top Header & Session Switcher */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-[#ebebeb] pb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-[#e5e7eb] pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-[#171717]" />
-            <h1 className="font-sans text-2xl sm:text-3xl font-semibold tracking-[-1.28px] text-[#171717]">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-[#FF6039]" />
+            <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#161616]">
               Design-to-Dev Validation Studio
             </h1>
-            <span className="rounded-[4px] bg-[#f5f5f5] px-2 py-0.5 text-xs font-mono text-[#171717] border border-[#ebebeb] font-semibold">
+            <span className="rounded-[4px] bg-[#f4f4f5] px-2 py-0.5 text-xs font-mono text-[#161616] border border-[#e5e7eb] font-bold">
               Signature Handshake
             </span>
           </div>
-          <p className="mt-1 text-sm text-[#4d4d4d]">
+          <p className="mt-1 text-sm text-[#525252]">
             Compare Figma design specifications side-by-side with live interactive React builds. Drop visual discrepancy pins and verify token compliance.
           </p>
         </div>
@@ -395,7 +395,7 @@ export const ValidationStudioView: React.FC = () => {
                   {fsmState === 'idle' && (
                     <button
                       onClick={handleStartPayment}
-                      className={`w-full flex items-center justify-center gap-2 rounded-full bg-[#171717] text-xs font-mono font-bold text-white shadow-sm hover:bg-[#333333] transition-all ${
+                      className={`w-full flex items-center justify-center gap-2 rounded-full bg-[#FF6039] text-xs font-mono font-bold text-[#161616] shadow-sm hover:bg-[#E54D26] transition-all cursor-pointer ${
                         isSimulatedTokenPaddingFixed ? 'py-3.5 min-h-[48px]' : 'py-2.5 min-h-[38px]'
                       }`}
                     >
@@ -577,17 +577,17 @@ export const ValidationStudioView: React.FC = () => {
               />
             </div>
 
-            <div className="pt-4 border-t border-[#ebebeb] flex justify-end gap-3">
+            <div className="pt-4 border-t border-[#e5e7eb] flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setNewPinCoords(null)}
-                className="rounded-[6px] border border-[#ebebeb] bg-white px-4 py-2 text-xs text-[#4d4d4d] hover:bg-[#fafafa]"
+                className="btn-secondary-dark"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="rounded-[6px] bg-[#171717] px-5 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-all"
+                className="btn-primary-orange"
               >
                 Save Discrepancy Pin
               </button>

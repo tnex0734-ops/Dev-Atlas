@@ -41,6 +41,7 @@ import {
   PromptOptimizationMode,
   ProjectMemoryEvent,
   MemoryState,
+  ProjectMeeting,
 } from '../types';
 import {
   initialMetrics,
@@ -78,16 +79,54 @@ import {
   initialWorkspaces,
   initialLLMModels,
   initialMemoryEvents,
+  initialMeetings,
 } from '../data/initialSeedData';
 import { securityService } from '../security/services/securityService';
 import { evaluateSecurityGate } from '../security/services/securityGate';
 import { calculateSecurityMetrics } from '../security/services/securityMetrics';
 import { StartAssessmentInput, SecurityAssessmentResult } from '../security/types';
+import { taskRepository } from '../services/repositories/taskRepository';
+import { meetingRepository } from '../services/repositories/meetingRepository';
+import { decisionRepository } from '../services/repositories/decisionRepository';
+import { memoryRepository } from '../services/repositories/memoryRepository';
+import { projectRepository } from '../services/repositories/projectRepository';
 
 interface ToastInfo {
   id: string;
   text: string;
   type: 'success' | 'info' | 'error' | 'amber';
+}
+
+export interface WorkspaceInitialData {
+  prds?: ProductRequirement[];
+  devTasks?: DevTask[];
+  contextBlocks?: ContextBlock[];
+  decisions?: ProjectDecision[];
+  securityFindings?: SecurityFinding[];
+  securityEvidence?: SecurityEvidence[];
+  feedback?: FeedbackItem[];
+  problemClusters?: ProblemCluster[];
+  featureRequests?: FeatureRequest[];
+  strategicInsights?: StrategicInsight[];
+  roadmap?: RoadmapEpic[];
+  features?: ProductFeature[];
+  designTokens?: DesignToken[];
+  figmaSpecs?: FigmaFrameSpec[];
+  validationSessions?: DesignValidationSession[];
+  uxFindings?: UXFinding[];
+  personas?: UserPersona[];
+  designReviews?: DesignReviewThread[];
+  sprintFeatures?: SprintFeature[];
+  sandboxBuilds?: SandboxBuild[];
+  qaTestCases?: QATestCase[];
+  bugs?: BugItem[];
+  readinessChecks?: ReleaseReadinessCheck[];
+  releases?: ReleaseItem[];
+  incidents?: IncidentItem[];
+  maintenanceTasks?: MaintenanceTask[];
+  meetings?: ProjectMeeting[];
+  secondBrainNotes?: SecondBrainNote[];
+  metrics?: Partial<ProjectMetrics>;
 }
 
 interface ProjectContextType {
@@ -97,14 +136,7 @@ interface ProjectContextType {
   switchWorkspace: (workspaceId: string) => void;
   createWorkspace: (
     workspace: Omit<ProjectWorkspace, 'id' | 'createdAt' | 'healthScore'>,
-    initialData?: {
-      prds?: ProductRequirement[];
-      devTasks?: DevTask[];
-      contextBlocks?: ContextBlock[];
-      decisions?: ProjectDecision[];
-      securityFindings?: SecurityFinding[];
-      securityEvidence?: SecurityEvidence[];
-    }
+    initialData?: WorkspaceInitialData
   ) => void;
 
   // LLM targets
@@ -170,6 +202,7 @@ interface ProjectContextType {
   sandboxBuilds: SandboxBuild[];
   updateTaskStatus: (taskId: string, status: DevTask['status']) => void;
   createDevTask: (task: Omit<DevTask, 'id' | 'taskCode'>) => void;
+  deleteDevTask: (taskId: string) => void;
 
   // QA & release
   qaTestCases: QATestCase[];
@@ -179,6 +212,7 @@ interface ProjectContextType {
   toggleReadinessCheck: (checkId: string) => void;
   calculateReadinessScore: () => number;
   addBugItem: (bug: Omit<BugItem, 'id' | 'bugCode' | 'detectedAt'>) => void;
+  deleteBugItem: (bugId: string) => void;
 
   // Operations
   releases: ReleaseItem[];
@@ -190,10 +224,18 @@ interface ProjectContextType {
   secondBrainNotes: SecondBrainNote[];
   fileVault: FileVaultItem[];
   decisions: ProjectDecision[];
+  meetings: ProjectMeeting[];
+  addMeeting: (meeting: Omit<ProjectMeeting, 'id' | 'meetingCode'>) => void;
+  deleteMeeting: (meetingId: string) => void;
+  toggleMeetingActionItem: (meetingId: string, actionId: string, done: boolean) => void;
   addSecondBrainNote: (title: string, rawContent: string, tags: string[]) => void;
+  deleteSecondBrainNote: (noteId: string) => void;
   refineNoteWithAI: (noteId: string) => void;
   logDecision: (decision: Omit<ProjectDecision, 'id' | 'decisionCode' | 'date'>) => void;
+  deleteDecision: (decisionId: string) => void;
   addContextBlock: (block: Omit<ContextBlock, 'id' | 'lastUpdated'>) => void;
+  deleteContextBlock: (blockId: string) => void;
+  deleteFeedbackItem: (feedbackId: string) => void;
 
   // Security
   securityAssessments: SecurityAssessment[];
@@ -213,6 +255,7 @@ interface ProjectContextType {
   openMemoryDrawer: (params?: { eventId?: string; entityType?: string; entityId?: string }) => void;
   closeMemoryDrawer: () => void;
   recordMemoryEvent: (event: Omit<ProjectMemoryEvent, 'id' | 'occurredAt'>) => void;
+  deleteMemoryEvent: (eventId: string) => void;
   updateMemoryState: (eventId: string, state: MemoryState, supersedingEventId?: string) => void;
   getMemoryForEntity: (entityType: string, entityId: string) => ProjectMemoryEvent[];
   getMemoryTimeline: (entityType: string, entityId: string) => ProjectMemoryEvent[];
@@ -249,11 +292,19 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const hasFlagship = parsed.some((w: ProjectWorkspace) => w.id === 'ws-signals-flagship');
+          const sanitized = parsed
+            .filter((w: ProjectWorkspace) => w.id !== 'ws-strix-sec' && w.id !== 'ws-default')
+            .map((w: ProjectWorkspace) => {
+              if (w.code === 'SHAD' || (w.name && w.name.toLowerCase().includes('shadcn'))) {
+                return { ...w, deployedUrl: undefined, socialLinks: undefined };
+              }
+              return w;
+            });
+          const hasFlagship = sanitized.some((w: ProjectWorkspace) => w.id === 'ws-signals-flagship');
           if (!hasFlagship) {
-            return [...initialWorkspaces, ...parsed.filter((w: ProjectWorkspace) => w.id !== 'ws-default')];
+            return [...initialWorkspaces, ...sanitized];
           }
-          return parsed;
+          return sanitized;
         }
       }
     } catch (e) {
@@ -264,7 +315,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(() => {
     const savedId = localStorage.getItem(STORAGE_KEY_ACTIVE_WS);
-    if (savedId && workspaces.some((w) => w.id === savedId)) return savedId;
+    if (savedId && savedId !== 'ws-strix-sec' && workspaces.some((w) => w.id === savedId)) return savedId;
     return workspaces[0]?.id || initialWorkspaces[0].id;
   });
 
@@ -312,9 +363,28 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (parsed.securityFindings) setSecurityFindings(parsed.securityFindings);
         if (parsed.securityEvidence) setSecurityEvidence(parsed.securityEvidence);
         if (parsed.feedback) setFeedback(parsed.feedback);
-        if (parsed.secondBrainNotes) setSecondBrainNotes(parsed.secondBrainNotes);
-        if (parsed.bugs) setBugs(parsed.bugs);
+        if (parsed.problemClusters) setProblemClusters(parsed.problemClusters);
+        if (parsed.featureRequests) setFeatureRequests(parsed.featureRequests);
+        if (parsed.strategicInsights) setStrategicInsights(parsed.strategicInsights);
+        if (parsed.roadmap) setRoadmap(parsed.roadmap);
+        if (parsed.features) setFeatures(parsed.features);
+        if (parsed.designTokens) setDesignTokens(parsed.designTokens);
+        if (parsed.figmaSpecs) setFigmaSpecs(parsed.figmaSpecs);
+        if (parsed.validationSessions) setValidationSessions(parsed.validationSessions);
+        if (parsed.uxFindings) setUXFindings(parsed.uxFindings);
+        if (parsed.personas) setPersonas(parsed.personas);
+        if (parsed.designReviews) setDesignReviews(parsed.designReviews);
+        if (parsed.sprintFeatures) setSprintFeatures(parsed.sprintFeatures);
+        if (parsed.sandboxBuilds) setSandboxBuilds(parsed.sandboxBuilds);
         if (parsed.qaTestCases) setQATestCases(parsed.qaTestCases);
+        if (parsed.bugs) setBugs(parsed.bugs);
+        if (parsed.readinessChecks) setReadinessChecks(parsed.readinessChecks);
+        if (parsed.releases) setReleases(parsed.releases);
+        if (parsed.incidents) setIncidents(parsed.incidents);
+        if (parsed.maintenanceTasks) setMaintenanceTasks(parsed.maintenanceTasks);
+        if (parsed.meetings) setMeetings(parsed.meetings);
+        if (parsed.secondBrainNotes) setSecondBrainNotes(parsed.secondBrainNotes);
+        if (parsed.metrics) setMetrics((prev) => ({ ...prev, ...parsed.metrics }));
       } else if (workspaceId === 'ws-signals-flagship') {
         // Load initial rich demo data
         setPRDs(initialPRDs);
@@ -324,21 +394,28 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setSecurityFindings(initialSecurityFindings);
         setSecurityEvidence(initialSecurityEvidence);
         setFeedback(initialFeedback);
-        setSecondBrainNotes(initialSecondBrainNotes);
-        setBugs(initialBugItems);
+        setProblemClusters(initialProblemClusters);
+        setFeatureRequests(initialFeatureRequests);
+        setStrategicInsights(initialInsights);
+        setRoadmap(initialRoadmap);
+        setFeatures(initialFeatures);
+        setDesignTokens(initialDesignTokens);
+        setFigmaSpecs(initialFigmaSpecs);
+        setValidationSessions(initialValidationSessions);
+        setUXFindings(initialUXFindings);
+        setPersonas(initialPersonas);
+        setDesignReviews(initialDesignReviews);
+        setSprintFeatures(initialSprintFeatures);
+        setSandboxBuilds(initialSandboxBuilds);
         setQATestCases(initialQATestCases);
-      } else {
-        // Start clean for this new workspace
-        setPRDs([]);
-        setDevTasks([]);
-        setContextBlocks([]);
-        setDecisions([]);
-        setSecurityFindings([]);
-        setSecurityEvidence([]);
-        setFeedback([]);
-        setSecondBrainNotes([]);
-        setBugs([]);
-        setQATestCases([]);
+        setBugs(initialBugItems);
+        setReadinessChecks(initialReadinessChecks);
+        setReleases(initialReleases);
+        setIncidents(initialIncidents);
+        setMaintenanceTasks(initialMaintenance);
+        setMeetings(initialMeetings);
+        setSecondBrainNotes(initialSecondBrainNotes);
+        setMetrics(initialMetrics);
       }
     } catch (e) {
       console.warn('Failed to load cached workspace data', e);
@@ -350,19 +427,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const createWorkspace = useCallback(
     (
       newWsData: Omit<ProjectWorkspace, 'id' | 'createdAt' | 'healthScore'>,
-      initialData?: {
-        prds?: ProductRequirement[];
-        devTasks?: DevTask[];
-        contextBlocks?: ContextBlock[];
-        decisions?: ProjectDecision[];
-        securityFindings?: SecurityFinding[];
-        securityEvidence?: SecurityEvidence[];
-      }
+      initialData?: WorkspaceInitialData
     ) => {
       const newWs: ProjectWorkspace = {
         ...newWsData,
         id: `ws-${Date.now()}`,
-        healthScore: 100,
+        healthScore: initialData?.metrics?.compositeHealth ?? 94,
         createdAt: new Date().toISOString().split('T')[0],
       };
 
@@ -383,6 +453,28 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const decItems = initialData?.decisions || [];
       const secItems = initialData?.securityFindings || [];
       const evItems = initialData?.securityEvidence || [];
+      const fbItems = initialData?.feedback || [];
+      const clusterItems = initialData?.problemClusters || [];
+      const frItems = initialData?.featureRequests || [];
+      const insightItems = initialData?.strategicInsights || [];
+      const roadmapItems = initialData?.roadmap || [];
+      const featItems = initialData?.features || [];
+      const tokenItems = initialData?.designTokens || [];
+      const figmaItems = initialData?.figmaSpecs || [];
+      const valItems = initialData?.validationSessions || [];
+      const uxfItems = initialData?.uxFindings || [];
+      const persItems = initialData?.personas || [];
+      const drevItems = initialData?.designReviews || [];
+      const spfItems = initialData?.sprintFeatures || [];
+      const bldItems = initialData?.sandboxBuilds || [];
+      const qaItems = initialData?.qaTestCases || [];
+      const bugItems = initialData?.bugs || [];
+      const rcItems = initialData?.readinessChecks || [];
+      const relItems = initialData?.releases || [];
+      const incItems = initialData?.incidents || [];
+      const maintItems = initialData?.maintenanceTasks || [];
+      const mtgItems = initialData?.meetings || [];
+      const noteItems = initialData?.secondBrainNotes || [];
 
       // Set active in-memory state
       setPRDs(prdItems);
@@ -391,10 +483,35 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setDecisions(decItems);
       setSecurityFindings(secItems);
       setSecurityEvidence(evItems);
-      setFeedback([]);
-      setSecondBrainNotes([]);
-      setBugs([]);
-      setQATestCases([]);
+      setFeedback(fbItems);
+      setProblemClusters(clusterItems);
+      setFeatureRequests(frItems);
+      setStrategicInsights(insightItems);
+      setRoadmap(roadmapItems);
+      setFeatures(featItems);
+      setDesignTokens(tokenItems);
+      setFigmaSpecs(figmaItems);
+      setValidationSessions(valItems);
+      setUXFindings(uxfItems);
+      setPersonas(persItems);
+      setDesignReviews(drevItems);
+      setSprintFeatures(spfItems);
+      setSandboxBuilds(bldItems);
+      setQATestCases(qaItems);
+      setBugs(bugItems);
+      setReadinessChecks(rcItems);
+      setReleases(relItems);
+      setIncidents(incItems);
+      setMaintenanceTasks(maintItems);
+      setMeetings(mtgItems);
+      setSecondBrainNotes(noteItems);
+      if (initialData?.metrics) {
+        setMetrics((prev) => ({
+          ...prev,
+          ...initialData.metrics,
+          compositeHealth: newWs.healthScore,
+        }));
+      }
 
       // Cache locally in localStorage
       try {
@@ -407,18 +524,36 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             decisions: decItems,
             securityFindings: secItems,
             securityEvidence: evItems,
-            feedback: [],
-            secondBrainNotes: [],
-            bugs: [],
-            qaTestCases: [],
+            feedback: fbItems,
+            problemClusters: clusterItems,
+            featureRequests: frItems,
+            strategicInsights: insightItems,
+            roadmap: roadmapItems,
+            features: featItems,
+            designTokens: tokenItems,
+            figmaSpecs: figmaItems,
+            validationSessions: valItems,
+            uxFindings: uxfItems,
+            personas: persItems,
+            designReviews: drevItems,
+            sprintFeatures: spfItems,
+            sandboxBuilds: bldItems,
+            qaTestCases: qaItems,
+            bugs: bugItems,
+            readinessChecks: rcItems,
+            releases: relItems,
+            incidents: incItems,
+            maintenanceTasks: maintItems,
+            meetings: mtgItems,
+            secondBrainNotes: noteItems,
+            metrics: initialData?.metrics,
           })
         );
       } catch (e) {
         console.warn('Failed to cache workspace data in localStorage', e);
       }
 
-
-      showToast(`Ingested real repository memory for ${newWs.name} (${newWs.code})!`, 'success');
+      showToast(`Ingested real repository & deployed intelligence for ${newWs.name} (${newWs.code})!`, 'success');
     },
     [showToast]
   );
@@ -438,10 +573,38 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     showToast(`Prompt target optimized for ${model.name} (${model.providerName})`, 'info');
   }, [showToast]);
 
-  // Navigation & Role State
-  const [activeRole, setActiveRole] = useState<RoleType>('all');
-  const [activeSection, setActiveSection] = useState<NavSection>('overview');
+  // Navigation & Role State with URL search params support
+  const [activeRole, setActiveRole] = useState<RoleType>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const role = params.get('role') as RoleType;
+      if (role && ['all', 'pm', 'designer', 'dev', 'qa', 'ops', 'memory'].includes(role)) {
+        return role;
+      }
+    } catch (e) {}
+    return 'pm';
+  });
+
+  const [activeSection, setActiveSection] = useState<NavSection>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const sec = params.get('section') as NavSection;
+      if (sec) return sec;
+    } catch (e) {}
+    return 'feedback';
+  });
+
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+
+  // Sync role and section to URL query parameters
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('role', activeRole);
+      url.searchParams.set('section', activeSection);
+      window.history.replaceState({}, '', url.toString());
+    } catch (e) {}
+  }, [activeRole, activeSection]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
@@ -463,22 +626,22 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const roleSections: Record<RoleType, NavSection[]> = {
       all: [
-        'overview', 'product-health', 'roadmap', 'features', 'requirements',
+        'overview', 'product-health', 'roadmap', 'meetings', 'features', 'requirements',
         'feedback', 'user-issues', 'feature-requests', 'insights',
         'context', 'notes', 'files', 'decisions', 'project-memory',
       ],
       pm: [
-        'overview', 'product-health', 'roadmap', 'features', 'requirements',
+        'overview', 'product-health', 'roadmap', 'meetings', 'features', 'requirements',
         'feedback', 'user-issues', 'feature-requests', 'insights',
         'context', 'notes', 'files', 'decisions', 'project-memory',
       ],
       designer: [
         'research', 'findings', 'user-patterns',
-        'validation', 'designs', 'figma', 'reviews', 'project-memory',
+        'validation', 'designs', 'figma', 'reviews', 'meetings', 'project-memory',
       ],
       dev: [
         'tasks', 'dev-features', 'builds', 'prompts',
-        'validation', 'context', 'project-memory',
+        'validation', 'context', 'meetings', 'project-memory',
       ],
       qa: [
         'security', 'qa-status', 'bugs', 'release-readiness', 'project-memory',
@@ -502,33 +665,45 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Domain States
   const [metrics, setMetrics] = useState<ProjectMetrics>(initialMetrics);
-  const [feedback, setFeedback] = useState<FeedbackItem[]>(initialFeedback);
+  const [feedback, setFeedback] = useState<FeedbackItem[]>(() => {
+    try {
+      const cached = localStorage.getItem(`devatlas_ws_${activeWorkspaceId}_data`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed.feedback) && parsed.feedback.length >= initialFeedback.length) {
+          return parsed.feedback;
+        }
+      }
+    } catch (e) {}
+    return initialFeedback;
+  });
   const [problemClusters, setProblemClusters] = useState<ProblemCluster[]>(initialProblemClusters);
   const [featureRequests, setFeatureRequests] = useState<FeatureRequest[]>(initialFeatureRequests);
-  const [strategicInsights] = useState<StrategicInsight[]>(initialInsights);
+  const [strategicInsights, setStrategicInsights] = useState<StrategicInsight[]>(initialInsights);
   const [prds, setPRDs] = useState<ProductRequirement[]>(initialPRDs);
-  const [features] = useState<ProductFeature[]>(initialFeatures);
-  const [roadmap] = useState<RoadmapEpic[]>(initialRoadmap);
-  const [researchSessions] = useState<ResearchSession[]>(initialResearchSessions);
-  const [uxFindings] = useState<UXFinding[]>(initialUXFindings);
-  const [personas] = useState<UserPersona[]>(initialPersonas);
+  const [features, setFeatures] = useState<ProductFeature[]>(initialFeatures);
+  const [roadmap, setRoadmap] = useState<RoadmapEpic[]>(initialRoadmap);
+  const [researchSessions, setResearchSessions] = useState<ResearchSession[]>(initialResearchSessions);
+  const [uxFindings, setUXFindings] = useState<UXFinding[]>(initialUXFindings);
+  const [personas, setPersonas] = useState<UserPersona[]>(initialPersonas);
   const [validationSessions, setValidationSessions] = useState<DesignValidationSession[]>(initialValidationSessions);
-  const [designTokens] = useState<DesignToken[]>(initialDesignTokens);
-  const [figmaSpecs] = useState<FigmaFrameSpec[]>(initialFigmaSpecs);
+  const [designTokens, setDesignTokens] = useState<DesignToken[]>(initialDesignTokens);
+  const [figmaSpecs, setFigmaSpecs] = useState<FigmaFrameSpec[]>(initialFigmaSpecs);
   const [designReviews, setDesignReviews] = useState<DesignReviewThread[]>(initialDesignReviews);
   const [devTasks, setDevTasks] = useState<DevTask[]>(initialDevTasks);
-  const [sprintFeatures] = useState<SprintFeature[]>(initialSprintFeatures);
-  const [sandboxBuilds] = useState<SandboxBuild[]>(initialSandboxBuilds);
+  const [sprintFeatures, setSprintFeatures] = useState<SprintFeature[]>(initialSprintFeatures);
+  const [sandboxBuilds, setSandboxBuilds] = useState<SandboxBuild[]>(initialSandboxBuilds);
   const [qaTestCases, setQATestCases] = useState<QATestCase[]>(initialQATestCases);
   const [bugs, setBugs] = useState<BugItem[]>(initialBugItems);
   const [readinessChecks, setReadinessChecks] = useState<ReleaseReadinessCheck[]>(initialReadinessChecks);
-  const [releases] = useState<ReleaseItem[]>(initialReleases);
-  const [incidents] = useState<IncidentItem[]>(initialIncidents);
-  const [maintenanceTasks] = useState<MaintenanceTask[]>(initialMaintenance);
+  const [releases, setReleases] = useState<ReleaseItem[]>(initialReleases);
+  const [incidents, setIncidents] = useState<IncidentItem[]>(initialIncidents);
+  const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTask[]>(initialMaintenance);
   const [contextBlocks, setContextBlocks] = useState<ContextBlock[]>(initialContextBlocks);
-  const [secondBrainNotes, setSecondBrainNotes] = useState<SecondBrainNote[]>(initialSecondBrainNotes);
-  const [fileVault] = useState<FileVaultItem[]>(initialFileVault);
   const [decisions, setDecisions] = useState<ProjectDecision[]>(initialDecisions);
+  const [meetings, setMeetings] = useState<ProjectMeeting[]>(initialMeetings);
+  const [secondBrainNotes, setSecondBrainNotes] = useState<SecondBrainNote[]>(initialSecondBrainNotes);
+  const [fileVault, setFileVault] = useState<FileVaultItem[]>(initialFileVault);
 
   // Security Intelligence Layer State
   const [securityAssessments, setSecurityAssessments] = useState<SecurityAssessment[]>(initialSecurityAssessments);
@@ -569,6 +744,42 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSelectedMemoryId(null);
   }, []);
 
+  // Real-time Firestore subscriptions for active project
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+
+    const unsubTasks = taskRepository.subscribeToTasks(activeWorkspaceId, (remoteTasks) => {
+      if (remoteTasks && remoteTasks.length > 0) {
+        setDevTasks(remoteTasks);
+      }
+    });
+
+    const unsubMeetings = meetingRepository.subscribeToMeetings(activeWorkspaceId, (remoteMeetings) => {
+      if (remoteMeetings && remoteMeetings.length > 0) {
+        setMeetings(remoteMeetings);
+      }
+    });
+
+    const unsubDecisions = decisionRepository.subscribeToDecisions(activeWorkspaceId, (remoteDecisions) => {
+      if (remoteDecisions && remoteDecisions.length > 0) {
+        setDecisions(remoteDecisions);
+      }
+    });
+
+    const unsubMemory = memoryRepository.subscribeToMemory(activeWorkspaceId, (remoteMemories) => {
+      if (remoteMemories && remoteMemories.length > 0) {
+        setMemoryEvents(remoteMemories);
+      }
+    });
+
+    return () => {
+      unsubTasks();
+      unsubMeetings();
+      unsubDecisions();
+      unsubMemory();
+    };
+  }, [activeWorkspaceId]);
+
   const recordMemoryEvent = useCallback(
     (event: Omit<ProjectMemoryEvent, 'id' | 'occurredAt'>) => {
       const newEvent: ProjectMemoryEvent = {
@@ -577,9 +788,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         occurredAt: new Date().toISOString().split('T')[0],
       };
       setMemoryEvents((prev) => [newEvent, ...prev]);
+      memoryRepository.saveMemoryEvent(activeWorkspaceId, newEvent).catch((err) =>
+        console.warn('[ProjectContext] Firestore save memoryEvent error:', err)
+      );
       showToast(`Memory recorded: ${newEvent.title}`, 'info');
     },
-    [showToast]
+    [activeWorkspaceId, showToast]
   );
 
   const updateMemoryState = useCallback(
@@ -883,8 +1097,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setDevTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, status } : t))
     );
+    taskRepository.updateTaskStatus(activeWorkspaceId, taskId, status).catch((err) =>
+      console.warn('[ProjectContext] Firestore updateTaskStatus error:', err)
+    );
     showToast(`Task status updated to ${status.toUpperCase()}`, 'info');
-  }, [showToast]);
+  }, [activeWorkspaceId, showToast]);
 
   const createDevTask = useCallback((task: Omit<DevTask, 'id' | 'taskCode'>) => {
     const taskCode = `DEV-${425 + devTasks.length}`;
@@ -894,8 +1111,20 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       taskCode,
     };
     setDevTasks((prev) => [newTask, ...prev]);
+    taskRepository.saveTask(activeWorkspaceId, newTask).catch((err) =>
+      console.warn('[ProjectContext] Firestore saveTask error:', err)
+    );
     showToast(`Dev Task ${taskCode} created!`, 'success');
-  }, [devTasks.length, showToast]);
+  }, [activeWorkspaceId, devTasks.length, showToast]);
+
+  const deleteDevTask = useCallback((taskId: string) => {
+    const task = devTasks.find((t) => t.id === taskId);
+    setDevTasks((prev) => prev.filter((t) => t.id !== taskId));
+    taskRepository.deleteTask(activeWorkspaceId, taskId).catch((err) =>
+      console.warn('[ProjectContext] Firestore deleteTask error:', err)
+    );
+    showToast(`Task ${task?.taskCode || taskId} deleted`, 'info');
+  }, [activeWorkspaceId, devTasks, showToast]);
 
   // 4. QA & Release Readiness
   const toggleQATest = useCallback((testId: string) => {
@@ -947,6 +1176,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
     showToast(`Bug logged: ${bugCode}`, 'error');
   }, [bugs.length, showToast]);
+
+  const deleteBugItem = useCallback((bugId: string) => {
+    const bug = bugs.find((b) => b.id === bugId);
+    setBugs((prev) => prev.filter((b) => b.id !== bugId));
+    showToast(`Bug ${bug?.bugCode || bugId} deleted`, 'info');
+  }, [bugs, showToast]);
 
   // 5. Persistent Project Memory OS
   const addSecondBrainNote = useCallback((title: string, rawContent: string, tags: string[]) => {
@@ -1001,16 +1236,66 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [secondBrainNotes, showToast]);
 
   const logDecision = useCallback((decision: Omit<ProjectDecision, 'id' | 'decisionCode' | 'date'>) => {
-    const decisionCode = `DEC-${104 + decisions.length}`;
+    const isTechnical = decision.decisionType === 'technical' || decision.category === 'Architecture' || decision.category === 'Operations';
+    const prefix = isTechnical ? 'ADR' : 'DEC';
+    const decisionCode = `${prefix}-${104 + decisions.length}`;
     const newDecision: ProjectDecision = {
       ...decision,
+      decisionType: decision.decisionType || (isTechnical ? 'technical' : 'verbal'),
       id: `dec-${Date.now()}`,
       decisionCode,
       date: new Date().toISOString().split('T')[0],
     };
     setDecisions((prev) => [newDecision, ...prev]);
-    showToast(`Architectural Decision ${decisionCode} permanently recorded`, 'success');
-  }, [decisions.length, showToast]);
+    decisionRepository.saveDecision(activeWorkspaceId, newDecision).catch((err) =>
+      console.warn('[ProjectContext] Firestore logDecision error:', err)
+    );
+    showToast(
+      isTechnical
+        ? `Architectural Decision ${decisionCode} permanently recorded (Technical ADR)`
+        : `Team Agreement ${decisionCode} recorded (Verbal Decision)`,
+      'success'
+    );
+  }, [activeWorkspaceId, decisions.length, showToast]);
+
+  const addMeeting = useCallback((meetingData: Omit<ProjectMeeting, 'id' | 'meetingCode'>) => {
+    const meetingCode = `MTG-${String(meetings.length + 25).padStart(3, '0')}`;
+    const newMeeting: ProjectMeeting = {
+      ...meetingData,
+      id: `meet-${Date.now()}`,
+      meetingCode,
+    };
+    setMeetings((prev) => [newMeeting, ...prev]);
+    meetingRepository.saveMeeting(activeWorkspaceId, newMeeting).catch((err) =>
+      console.warn('[ProjectContext] Firestore addMeeting error:', err)
+    );
+    showToast(`Recorded meeting ${meetingCode}: ${newMeeting.title}`, 'success');
+  }, [activeWorkspaceId, meetings.length, showToast]);
+
+  const deleteMeeting = useCallback((meetingId: string) => {
+    const meeting = meetings.find((m) => m.id === meetingId);
+    setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+    meetingRepository.deleteMeeting(activeWorkspaceId, meetingId).catch((err) =>
+      console.warn('[ProjectContext] Firestore deleteMeeting error:', err)
+    );
+    showToast(`Meeting ${meeting?.meetingCode || meetingId} deleted`, 'info');
+  }, [activeWorkspaceId, meetings, showToast]);
+
+  const toggleMeetingActionItem = useCallback((meetingId: string, actionId: string, done: boolean) => {
+    setMeetings((prev) =>
+      prev.map((m) => {
+        if (m.id !== meetingId) return m;
+        const updated = {
+          ...m,
+          actionItems: m.actionItems.map((a) => (a.id === actionId ? { ...a, done } : a)),
+        };
+        meetingRepository.toggleActionItem(activeWorkspaceId, meetingId, actionId, done, m).catch((err) =>
+          console.warn('[ProjectContext] Firestore toggleMeetingActionItem error:', err)
+        );
+        return updated;
+      })
+    );
+  }, [activeWorkspaceId]);
 
   const addContextBlock = useCallback((block: Omit<ContextBlock, 'id' | 'lastUpdated'>) => {
     const newBlock: ContextBlock = {
@@ -1021,6 +1306,42 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setContextBlocks((prev) => [newBlock, ...prev]);
     showToast('New Context Block added to Project Memory', 'success');
   }, [showToast]);
+
+  const deleteContextBlock = useCallback((blockId: string) => {
+    setContextBlocks((prev) => prev.filter((b) => b.id !== blockId));
+    showToast('Context Block deleted', 'info');
+  }, [showToast]);
+
+  const deleteSecondBrainNote = useCallback((noteId: string) => {
+    const note = secondBrainNotes.find((n) => n.id === noteId);
+    setSecondBrainNotes((prev) => prev.filter((n) => n.id !== noteId));
+    if (note && !note.isRefined) {
+      setMetrics((prev) => ({ ...prev, unrefinedNotesCount: Math.max(0, prev.unrefinedNotesCount - 1) }));
+    }
+    showToast('Note deleted from Second Brain', 'info');
+  }, [secondBrainNotes, showToast]);
+
+  const deleteDecision = useCallback((decisionId: string) => {
+    const decision = decisions.find((d) => d.id === decisionId);
+    setDecisions((prev) => prev.filter((d) => d.id !== decisionId));
+    decisionRepository.deleteDecision(activeWorkspaceId, decisionId).catch((err) =>
+      console.warn('[ProjectContext] Firestore deleteDecision error:', err)
+    );
+    showToast(`Decision ${decision?.decisionCode || decisionId} deleted`, 'info');
+  }, [activeWorkspaceId, decisions, showToast]);
+
+  const deleteFeedbackItem = useCallback((feedbackId: string) => {
+    setFeedback((prev) => prev.filter((f) => f.id !== feedbackId));
+    showToast('Feedback item deleted', 'info');
+  }, [showToast]);
+
+  const deleteMemoryEvent = useCallback((eventId: string) => {
+    setMemoryEvents((prev) => prev.filter((m) => m.id !== eventId));
+    memoryRepository.deleteMemoryEvent(activeWorkspaceId, eventId).catch((err) =>
+      console.warn('[ProjectContext] Firestore deleteMemoryEvent error:', err)
+    );
+    showToast('Memory event deleted', 'info');
+  }, [activeWorkspaceId, showToast]);
 
   // 9. Security Intelligence Layer Actions
   const startSecurityAssessment = useCallback(
@@ -1250,6 +1571,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       upvoteFeedback,
       upvoteFeatureRequest,
       addFeedbackItem,
+      deleteFeedbackItem,
       prds,
       features,
       roadmap,
@@ -1270,6 +1592,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       sandboxBuilds,
       updateTaskStatus,
       createDevTask,
+      deleteDevTask,
       qaTestCases,
       bugs,
       readinessChecks,
@@ -1277,6 +1600,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       toggleReadinessCheck,
       calculateReadinessScore,
       addBugItem,
+      deleteBugItem,
       releases,
       incidents,
       maintenanceTasks,
@@ -1284,10 +1608,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       secondBrainNotes,
       fileVault,
       decisions,
+      meetings,
+      addMeeting,
+      deleteMeeting,
+      toggleMeetingActionItem,
       addSecondBrainNote,
+      deleteSecondBrainNote,
       refineNoteWithAI,
       logDecision,
+      deleteDecision,
       addContextBlock,
+      deleteContextBlock,
       securityAssessments,
       securityFindings,
       securityEvidence,
@@ -1303,6 +1634,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       openMemoryDrawer,
       closeMemoryDrawer,
       recordMemoryEvent,
+      deleteMemoryEvent,
       updateMemoryState,
       getMemoryForEntity,
       getMemoryTimeline,
@@ -1341,6 +1673,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       upvoteFeedback,
       upvoteFeatureRequest,
       addFeedbackItem,
+      deleteFeedbackItem,
       prds,
       features,
       roadmap,
@@ -1361,6 +1694,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       sandboxBuilds,
       updateTaskStatus,
       createDevTask,
+      deleteDevTask,
       qaTestCases,
       bugs,
       readinessChecks,
@@ -1368,6 +1702,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       toggleReadinessCheck,
       calculateReadinessScore,
       addBugItem,
+      deleteBugItem,
       releases,
       incidents,
       maintenanceTasks,
@@ -1375,10 +1710,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       secondBrainNotes,
       fileVault,
       decisions,
+      meetings,
+      addMeeting,
+      deleteMeeting,
+      toggleMeetingActionItem,
       addSecondBrainNote,
+      deleteSecondBrainNote,
       refineNoteWithAI,
       logDecision,
+      deleteDecision,
       addContextBlock,
+      deleteContextBlock,
       securityAssessments,
       securityFindings,
       securityEvidence,
@@ -1394,6 +1736,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       openMemoryDrawer,
       closeMemoryDrawer,
       recordMemoryEvent,
+      deleteMemoryEvent,
       updateMemoryState,
       getMemoryForEntity,
       getMemoryTimeline,

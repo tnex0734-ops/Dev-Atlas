@@ -8,6 +8,7 @@ export type NavSection =
   | 'overview'
   | 'product-health'
   | 'roadmap'
+  | 'meetings'
   // 2. Product Management & Strategy
   | 'features'
   | 'requirements'
@@ -44,7 +45,9 @@ export type NavSection =
   | 'notes'
   | 'files'
   | 'decisions'
-  | 'project-memory';
+  | 'project-memory'
+  // 10. Team Connectors & Data Ingestion
+  | 'connectors';
 
 export type SentimentType = 'positive' | 'neutral' | 'negative';
 export type PlatformType = 'Android' | 'iOS' | 'Mobile' | 'Web' | 'Cross-Platform' | 'Backend / Cloud';
@@ -54,7 +57,7 @@ export type RequirementStage = 'Discovery' | 'In Design' | 'In Development' | 'R
 
 export interface FeedbackItem {
   id: string;
-  source: 'Google Play' | 'App Store' | 'Reddit' | 'GitHub Issues' | 'Support Desk' | 'Discord' | 'User Survey';
+  source: 'Google Play' | 'App Store' | 'Reddit' | 'GitHub Issues' | 'Support Desk' | 'Discord' | 'Twitter / X' | 'User Survey';
   userHandle: string;
   rating?: number;
   comment: string;
@@ -64,6 +67,16 @@ export interface FeedbackItem {
   appVersion: string;
   clusterId?: string;
   upvotes?: number;
+
+  // AI Summarized Intelligence & Strategic Metrics
+  aiSummary?: string;
+  aiKeyTakeaway?: string;
+  aiRecommendedAction?: string;
+  severity?: 'critical' | 'high' | 'medium' | 'low';
+  impactScore?: number;
+  affectedUsersEstimate?: number;
+  productArea?: string;
+  tags?: string[];
 }
 
 export interface ProblemCluster {
@@ -293,6 +306,13 @@ export interface DevTask {
   branch?: string;
   contextSummary: string;
   techStackTags: string[];
+  // Relational Memory Links
+  relatedDecisionId?: string;
+  relatedDecisionCode?: string;
+  relatedMeetingId?: string;
+  relatedMeetingTitle?: string;
+  whyItExists?: string;
+  dependencies?: string[];
 }
 
 export interface SprintFeature {
@@ -443,6 +463,61 @@ export interface ProjectDecision {
   stakeholders: string[];
   date: string;
   linkedFeatureId?: string;
+  // Relational Memory & Lineage
+  status?: 'active' | 'superseded' | 'deprecated' | 'proposed';
+  decisionType?: 'technical' | 'verbal';
+  relatedMeetingId?: string;
+  relatedMeetingTitle?: string;
+  relatedTaskId?: string;
+  relatedTaskCode?: string;
+  supersededBy?: string;
+  supersedes?: string;
+}
+
+// ==========================================
+// Meetings & Discussions Memory
+// ==========================================
+export interface MeetingActionItem {
+  id: string;
+  text: string;
+  owner: string;
+  role?: string;
+  done: boolean;
+  linkedTaskId?: string;
+  linkedTaskCode?: string;
+}
+
+export interface MeetingDiscussionPoint {
+  topic: string;
+  summary: string;
+  speaker?: string;
+}
+
+export interface ProjectMeeting {
+  id: string;
+  meetingCode: string; // e.g. 'MTG-024'
+  title: string;
+  date: string;
+  durationMinutes: number;
+  attendees: Array<{
+    name: string;
+    role: string;
+    avatar?: string;
+  }>;
+  summary: string;
+  discussionPoints: MeetingDiscussionPoint[];
+  decisions: Array<{
+    id: string;
+    text: string;
+    type?: 'technical' | 'verbal';
+    linkedDecisionId?: string;
+    linkedDecisionCode?: string;
+  }>;
+  actionItems: MeetingActionItem[];
+  unresolvedQuestions: string[];
+  status: 'Completed' | 'Action Required' | 'Follow-up Scheduled';
+  roleTag: RoleType;
+  relatedFeature?: string;
 }
 
 // Security findings & scans
@@ -592,6 +667,15 @@ export interface ProjectMetrics {
   criticalVulnerabilitiesCount: number;
 }
 
+export interface ProjectSocialLinks {
+  twitter?: string;
+  discord?: string;
+  figma?: string;
+  docs?: string;
+  reddit?: string;
+  linkedin?: string;
+}
+
 // Workspaces & models
 export interface ProjectWorkspace {
   id: string;
@@ -607,6 +691,9 @@ export interface ProjectWorkspace {
   owner: string;
   techStack: string[];
   themeColor: string;
+  repoUrl?: string;
+  deployedUrl?: string;
+  socialLinks?: ProjectSocialLinks;
 }
 
 export type LLMProviderId = 'anthropic' | 'openai' | 'google' | 'deepseek' | 'meta';
@@ -722,6 +809,30 @@ export interface ProjectMemoryEvent {
   // Truthfulness / data provenance
   source: 'manual' | 'system' | 'seed';
   rationaleRecorded: boolean;
+}
+
+// ==========================================
+// Platform Connectors & Ingestion Types
+// ==========================================
+export type ConnectorPlatform = 'github' | 'google-meet' | 'zoom' | 'teams' | 'figma' | 'customer-signals';
+
+export interface DataConnector {
+  id: ConnectorPlatform;
+  name: string;
+  category: 'code' | 'meetings' | 'design' | 'feedback';
+  description: string;
+  status: 'connected' | 'disconnected' | 'syncing';
+  connectedAccount?: string;
+  lastSyncedAt?: string;
+  metadata?: Record<string, any>;
+  stats?: {
+    filesCount?: number;
+    branchesCount?: number;
+    mergedPRsCount?: number;
+    openPRsCount?: number;
+    transcriptsCount?: number;
+    decisionsCount?: number;
+  };
 }
 
 

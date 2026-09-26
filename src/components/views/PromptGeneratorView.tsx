@@ -3,7 +3,7 @@ import {
   Zap,
   Copy,
   Check,
-  Sparkles,
+  BrainCircuit,
   BookOpen,
   FileText,
   Layers,
@@ -23,7 +23,21 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useProject } from '../../context/ProjectContext';
+import { useAI } from '../../context/AIContext';
 import { LLMModelTarget, PromptOptimizationMode } from '../../types';
+
+const DevAIChatBtn: React.FC = () => {
+  const { openStudio } = useAI();
+  return (
+    <button
+      onClick={() => openStudio('dev')}
+      className="flex items-center gap-1.5 rounded-full bg-[#FF6039] px-3.5 py-2 text-xs font-bold text-[#161616] hover:bg-[#E54D26] active:scale-[0.98] transition-all shadow-[0px_2px_8px_rgba(255,96,57,0.25)] touch-target cursor-pointer"
+    >
+      <BrainCircuit className="h-3.5 w-3.5 text-[#161616]" />
+      <span>Open Dev AI Chat</span>
+    </button>
+  );
+};
 
 export const PromptGeneratorView: React.FC = () => {
   const {
@@ -536,6 +550,7 @@ Implement complete, verified TypeScript code meeting all criteria above.`;
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          <DevAIChatBtn />
           <button
             onClick={() => setShowComparisonMatrix(!showComparisonMatrix)}
             className="flex items-center gap-1.5 rounded-[6px] border border-[#ebebeb] bg-white px-3 py-2 text-xs font-mono text-[#171717] hover:bg-[#fafafa] transition-all"
@@ -767,7 +782,7 @@ Implement complete, verified TypeScript code meeting all criteria above.`;
         <div className="rounded-[10px] border border-[#ebebeb] bg-white p-4 shadow-[0px_1px_2px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between text-xs font-mono text-[#8f8f8f]">
             <span>Token Efficiency</span>
-            <Sparkles className="h-3.5 w-3.5 text-[#f5a623]" />
+            <Zap className="h-3.5 w-3.5 text-[#f5a623]" />
           </div>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="font-mono text-2xl font-bold text-[#171717]">

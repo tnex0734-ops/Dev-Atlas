@@ -9,7 +9,6 @@ import {
   Plus,
   ExternalLink,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 import { RoleType, MemoryState, ProjectMemoryEvent } from '../../types';
 
@@ -596,28 +595,28 @@ export const ProjectMemoryView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#e5e7eb] pb-6">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#171717] text-white">
-              <BrainCircuit className="h-4 w-4 text-[#fb923c]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#161616] text-[#FF6039]">
+              <BrainCircuit className="h-4 w-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-[-1.28px] text-[#171717]">
+                <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#161616]">
                   {roleConfig.roleTitle}
                 </h1>
-                <span className="font-mono text-[10px] text-[#171717] bg-[#f4f4f5] px-2 py-0.5 rounded-[4px] font-bold uppercase border border-[#e5e7eb]">
+                <span className="font-mono text-[10px] text-[#161616] bg-[#f4f4f5] px-2 py-0.5 rounded-[4px] font-bold uppercase border border-[#e5e7eb]">
                   {selectedRole.toUpperCase()} LENS
                 </span>
               </div>
             </div>
           </div>
-          <p className="mt-1.5 text-sm text-[#374151] max-w-3xl font-normal leading-relaxed">
+          <p className="mt-1.5 text-sm text-[#525252] max-w-3xl font-normal leading-relaxed">
             {roleConfig.roleDescription}
           </p>
         </div>
 
         <button
           onClick={() => setRecordModalOpen(true)}
-          className="flex items-center gap-2 rounded-[6px] bg-[#171717] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-[#333333] transition-all shadow-xs self-start sm:self-auto shrink-0 touch-target"
+          className="btn-primary-orange self-start sm:self-auto shrink-0"
         >
           <Plus className="h-4 w-4" />
           <span>Log Decision Rationale</span>
@@ -672,15 +671,15 @@ export const ProjectMemoryView: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-t-[6px] whitespace-nowrap transition-all border-b-2 -mb-px touch-target ${
                   isActive
-                    ? 'border-[#171717] text-[#171717] bg-white font-bold'
-                    : 'border-transparent text-[#525252] hover:text-[#171717] font-semibold'
+                    ? 'border-[#FF6039] text-[#161616] bg-white font-bold'
+                    : 'border-transparent text-[#525252] hover:text-[#161616] font-semibold'
                 }`}
               >
                 <span>{tab.label}</span>
                 <span
                   className={`rounded-full px-1.5 py-0.2 text-[9px] font-mono font-bold ${
                     isActive
-                      ? 'bg-[#171717] text-white'
+                      ? 'bg-[#161616] text-white'
                       : 'bg-[#f4f4f5] text-[#525252] border border-[#e5e7eb]'
                   }`}
                 >
@@ -700,7 +699,7 @@ export const ProjectMemoryView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search memory by rationale, entity (e.g. PRD-105, DEV-416), decision, or owner..."
-              className="w-full rounded-[6px] border border-[#e5e7eb] bg-white pl-9 pr-3 py-2 text-xs text-[#171717] placeholder:text-[#6b7280] focus:border-[#171717] focus:outline-none"
+              className="w-full rounded-[6px] border border-[#e5e7eb] bg-white pl-9 pr-3 py-2 text-xs text-[#161616] placeholder:text-[#71717a] focus:border-[#FF6039] focus:ring-1 focus:ring-[#FF6039] focus:outline-none"
             />
           </div>
 
@@ -711,7 +710,7 @@ export const ProjectMemoryView: React.FC = () => {
               <select
                 value={selectedRole}
                 onChange={(e) => handleRoleChange(e.target.value as any)}
-                className="rounded-[6px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-xs text-[#171717] font-semibold focus:border-[#171717] focus:outline-none"
+                className="rounded-[6px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-xs text-[#161616] font-bold focus:border-[#FF6039] focus:ring-1 focus:ring-[#FF6039] focus:outline-none"
               >
                 <option value="all">🌐 All Disciplines</option>
                 <option value="pm">📊 Product (PM)</option>
@@ -726,7 +725,7 @@ export const ProjectMemoryView: React.FC = () => {
             <select
               value={selectedState}
               onChange={(e) => setSelectedState(e.target.value as any)}
-              className="rounded-[6px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-xs text-[#171717] font-semibold focus:border-[#171717] focus:outline-none"
+              className="rounded-[6px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-xs text-[#161616] font-bold focus:border-[#FF6039] focus:ring-1 focus:ring-[#FF6039] focus:outline-none"
             >
               <option value="all">All States</option>
               <option value="active">Active</option>
@@ -758,7 +757,7 @@ export const ProjectMemoryView: React.FC = () => {
                   setSelectedState('all');
                   setSearchQuery('');
                 }}
-                className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs font-semibold text-[#171717] hover:bg-[#fafafa]"
+                className="btn-secondary-dark"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-[#525252]" />
                 <span>Reset Lens Filters</span>
@@ -766,7 +765,7 @@ export const ProjectMemoryView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setRecordModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#171717] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#333333]"
+                className="btn-primary-orange text-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Log Rationale for {selectedRole.toUpperCase()}</span>
@@ -777,7 +776,7 @@ export const ProjectMemoryView: React.FC = () => {
           filteredEvents.map((event) => (
             <div
               key={event.id}
-              className={`rounded-[12px] border bg-white p-5 sm:p-6 shadow-2xs space-y-4 transition-all hover:border-[#171717] ${
+              className={`rounded-[12px] border bg-white p-5 sm:p-6 shadow-2xs space-y-4 transition-all hover:border-[#161616] ${
                 event.state === 'superseded'
                   ? 'border-purple-300 bg-purple-50/20'
                   : 'border-[#e5e7eb]'

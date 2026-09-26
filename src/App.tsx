@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { ProjectProvider, useProject } from './context/ProjectContext';
+import { AIProvider } from './context/AIContext';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { CommandPalette } from './components/common/CommandPalette';
 import { ToastContainer } from './components/common/Toast';
+import { AIFloatingButton } from './components/ai/AIFloatingButton';
+import { AIStudioDrawer } from './components/ai/AIStudioDrawer';
 
 import { OverviewView } from './components/views/OverviewView';
 import { ProductHealthView } from './components/views/ProductHealthView';
@@ -37,6 +40,8 @@ import { SecondBrainView } from './components/views/SecondBrainView';
 import { FileVaultView } from './components/views/FileVaultView';
 import { DecisionsLogView } from './components/views/DecisionsLogView';
 import { ProjectMemoryView } from './components/views/ProjectMemoryView';
+import { MeetingsView } from './components/views/MeetingsView';
+import { ConnectorsView } from './components/views/ConnectorsView';
 import { MemoryDrawer } from './components/memory/MemoryDrawer';
 
 const MainAppContent: React.FC = () => {
@@ -51,6 +56,8 @@ const MainAppContent: React.FC = () => {
         return <ProductHealthView />;
       case 'roadmap':
         return <RoadmapView />;
+      case 'meetings':
+        return <MeetingsView />;
 
       case 'features':
         return <FeaturesView />;
@@ -117,6 +124,8 @@ const MainAppContent: React.FC = () => {
         return <DecisionsLogView />;
       case 'project-memory':
         return <ProjectMemoryView />;
+      case 'connectors':
+        return <ConnectorsView />;
 
       default:
         return <OverviewView />;
@@ -124,7 +133,7 @@ const MainAppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#fafafa] text-[#171717] selection:bg-[#171717] selection:text-white font-sans antialiased">
+    <div className="flex min-h-screen flex-col bg-[#FAF7F2] text-[#18181b] selection:bg-[#18181b] selection:text-white font-sans antialiased">
       {/* Universal Command Palette */}
       <CommandPalette />
 
@@ -133,6 +142,10 @@ const MainAppContent: React.FC = () => {
 
       {/* Global Project Memory Drawer */}
       <MemoryDrawer />
+
+      {/* AI Studio */}
+      <AIStudioDrawer />
+      <AIFloatingButton />
 
       {/* Top Navigation Header */}
       <Header onToggleSidebar={() => setMobileSidebarOpen(!isMobileSidebarOpen)} />
@@ -154,10 +167,21 @@ const MainAppContent: React.FC = () => {
   );
 };
 
+import { AuthProvider } from './context/AuthContext';
+
+const AuthBridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { activeWorkspace } = useProject();
+  return <AuthProvider currentProjectId={activeWorkspace.id}>{children}</AuthProvider>;
+};
+
 export function App() {
   return (
     <ProjectProvider>
-      <MainAppContent />
+      <AuthBridge>
+        <AIProvider>
+          <MainAppContent />
+        </AIProvider>
+      </AuthBridge>
     </ProjectProvider>
   );
 }

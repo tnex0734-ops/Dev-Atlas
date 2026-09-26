@@ -262,7 +262,7 @@ export const RequirementsView: React.FC = () => {
               <div className="pt-4 border-t border-[#ebebeb] flex flex-wrap items-center justify-between gap-3">
                 <button
                   onClick={() => setActiveSection('prompts')}
-                  className="flex items-center gap-2 rounded-[6px] bg-[#171717] px-4 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-all shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
+                  className="flex items-center gap-2 rounded-[6px] bg-[#171717] px-4 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-all shadow-[0px_1px_2px_rgba(0,0,0,0.08)] cursor-pointer"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Generate AI Prompt with this PRD</span>
