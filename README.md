@@ -5,7 +5,7 @@
 
 <div align="center">
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed-devatlas--lake.vercel.app-black?style=for-the-badge&logo=vercel&logoColor=white)](https://devatlas-lake.vercel.app/?role=all&section=overview)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployment-Live%20on%20Vercel-black?style=for-the-badge&logo=vercel&logoColor=white)](https://devatlas-lake.vercel.app/?role=all&section=overview)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.1.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -15,18 +15,17 @@
 [![WCAG AA](https://img.shields.io/badge/WCAG-AA%20Compliant-success?style=for-the-badge)](#-design-system--accessibility-wcag-aa)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-[**🌐 Live Application**](https://devatlas-lake.vercel.app/?role=all&section=overview) • [**GitHub Repository**](https://github.com/tnex0734-ops/Dev-Atlas) • [**System Architecture**](#-system-architecture) • [**Role System**](#-the-7-role-operating-system) • [**Views Catalog**](#-catalog-of-all-34-specialized-domain-views) • [**Quickstart**](#-getting-started--local-development) • [**2-Min Demo Walkthrough**](#-2-minute-demonstration--pitch-walkthrough)
+[**Live Application**](https://devatlas-lake.vercel.app/?role=all&section=overview) • [**System Architecture**](#-system-architecture) • [**Role System**](#-the-7-role-operating-system) • [**Views Catalog**](#-catalog-of-all-34-specialized-domain-views) • [**Data Schema**](#-core-domain-data-schema) • [**Getting Started**](#-getting-started--local-development)
 
 </div>
 
-> [!TIP]
-> **🚀 Live Production Deployment:** Access the fully interactive live application at **[https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview)**. Experience the zero-latency responsive UI, 34 domain views, and grounded project AI directly in your browser without any local setup.
+> **Live Instance:** [https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview)
 
 ---
 
 ## 📋 Table of Contents
 
-1. [📌 Executive Summary & Problem Statement](#-problem-statement-eradicating-institutional-amnesia)
+1. [📌 Problem Statement: Eradicating Institutional Amnesia](#-problem-statement-eradicating-institutional-amnesia)
 2. [💡 The Core Solution: The Verifiable Rationale Chain](#-the-solution-the-verifiable-rationale-chain)
 3. [📊 How DevAtlas Compares to Traditional Tooling](#-how-devatlas-compares-to-traditional-tooling)
 4. [🎭 The 7-Role Operating System](#-the-7-role-operating-system)
@@ -48,9 +47,9 @@
 20. [🧪 Testing & Quality Assurance](#-testing--quality-assurance)
 21. [🚢 Deployment Guide (Vercel, Firebase, Static Hosts)](#-deployment-guide)
 22. [📐 Core Domain Data Schema (TypeScript)](#-core-domain-data-schema)
-23. [🎬 2-Minute Demonstration & Pitch Walkthrough](#-2-minute-demonstration--pitch-walkthrough)
-24. [❓ Frequently Asked Questions (FAQ)](#-frequently-asked-questions-faq)
-25. [🤝 Contributing & Community](#-contributing)
+23. [🔄 Core System Workflows](#-core-system-workflows)
+24. [❓ Technical FAQ](#-technical-faq)
+25. [🤝 Contributing](#-contributing)
 26. [📄 License](#-license)
 
 ---
@@ -415,7 +414,7 @@ export interface ProjectMemoryEvent {
 
 ## 🤖 Dual-Engine AI Studio Architecture
 
-DevAtlas features an advanced **Dual-Engine AI Architecture** designed for both zero-dependency local evaluation and production-grade cloud LLM execution:
+DevAtlas features an advanced **Dual-Engine AI Architecture** designed for both zero-dependency local execution and production-grade cloud LLM execution:
 
 ```
                                   ┌────────────────────────┐
@@ -838,7 +837,7 @@ Signalslab/Signalslab/ (Git Repository Root: https://github.com/tnex0734-ops/Dev
     │   │   ├── IconBadge3D.tsx      # 3D icon container
     │   │   ├── OnboardingBanner.tsx # Dismissable welcome journey
     │   │   └── BrandLogos.tsx       # Platform SVG icons (Play, App Store, Discord)
-    │   └── views/                  # 34 Specialized Domain Screens
+    │   └── views/                   # 34 Specialized Domain Screens
     │
     └── __tests__/                   # Automated Vitest Test Suite (28 Tests)
         ├── connectorService.test.ts # Transcript regex parsing tests
@@ -851,9 +850,7 @@ Signalslab/Signalslab/ (Git Repository Root: https://github.com/tnex0734-ops/Dev
 
 ## 🚀 Getting Started & Local Development
 
-### 🌐 Live Production Demo
-If you want to evaluate DevAtlas immediately without installing dependencies locally, access the live deployment:  
-👉 **[https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview)**
+The application is deployed live at [https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview) or can be executed locally using the instructions below.
 
 ### Prerequisites
 - **Node.js** `≥ 18.0.0`
@@ -882,7 +879,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ### Environment Configuration (`.env`)
 
 ```env
-# Firebase Configuration (Optional: pre-configured fallbacks enable instant local evaluation)
+# Firebase Configuration (Optional: in-memory fallbacks enable instant local run)
 VITE_FIREBASE_API_KEY=AIzaSy...
 VITE_FIREBASE_AUTH_DOMAIN=devatlas-app.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=devatlas-app
@@ -900,7 +897,7 @@ VITE_GROQ_API_KEY=your_groq_key
 ```
 
 > [!NOTE]
-> **Zero-Config Evaluation:** DevAtlas runs **100% functional out-of-the-box** without any `.env` keys. If no Firebase keys are set, it operates gracefully with offline fallback caching. If no AI keys are provided, the **Grounded Memory Engine** handles all queries deterministically without network calls.
+> **Zero-Config Local Execution:** DevAtlas runs **100% functional out-of-the-box** without any `.env` keys. If no Firebase keys are set, it operates with local storage caching. If no AI keys are provided, the **Grounded Memory Engine** handles all queries deterministically without network calls.
 
 ### Available NPM Scripts
 
@@ -937,7 +934,7 @@ npm run test -- --coverage
 
 ## 🚢 Deployment Guide
 
-### Option 1: Vercel (Active Production Deployment)
+### Option 1: Vercel (Production Deployment)
 
 - **Production URL:** [https://devatlas-lake.vercel.app/?role=all&section=overview](https://devatlas-lake.vercel.app/?role=all&section=overview)
 - **Status:** Live & Operational ✅
@@ -1052,49 +1049,44 @@ export interface ProjectMeeting {
 
 ---
 
-## 🎬 2-Minute Demonstration & Pitch Walkthrough
+## 🔄 Core System Workflows
 
-To experience the intended DevAtlas product journey:
+### 1. Discussion to Decision & Task Pipeline
+1. Team conducts a technical sync recorded in [`MeetingsView.tsx`](src/components/views/MeetingsView.tsx) (`MTG-024`).
+2. Meeting minutes record key decisions reached (`ADR-004`) and concrete action items.
+3. Checking an action item modifies its state across the UI and updates progress counters.
+4. Extracted decisions are promoted into permanent records in [`DecisionsLogView.tsx`](src/components/views/DecisionsLogView.tsx).
 
-1. **Enter Project Overview ([Live URL](https://devatlas-lake.vercel.app/?role=all&section=overview) or `http://localhost:5173`)**:
-   - Inspect the **Onboarding Banner** explaining the 5-point DevAtlas mental model.
-   - Review the **3D telemetry cards** (Done: 18, In Progress: 6, Blocked: 3) and composite sprint health ring (94%).
-   - Review the **Recent Discussions & Syncs** card showing `MTG-024`.
-2. **Inspect Meeting Memory (`Discussions & Syncs`)**:
-   - Click into `MTG-024` ("Android Payment Webhook Idempotency & Retry Safeguards").
-   - View the executive summary, decisions made (`ADR-004`), and action items.
-   - Toggle an action item checkbox (`"Implement Redis Redlock distributed lease..."`) to see instant status updates and sidebar count reflection.
-3. **Trace the Decision (`Decisions`)**:
-   - Navigate to `Decisions` $\rightarrow$ inspect `ADR-001` (SQLite Embedded Storage).
-   - Review the status (`Active Decision`), originating sync (`MTG-021`), and downstream tasks.
-   - Click the `<MemoryTrigger />` button to inspect before/after diffs in the slide-over `MemoryDrawer`.
-4. **Inspect Task Rationale (`Dev Tasks`)**:
-   - Open task `DEV-SIGN-001` on the drag-and-drop Kanban board.
-   - View the **"Why am I doing this? (Rationale Chain)"** box linking directly back to `ADR-001` and `MTG-021`.
-   - Drag the card between columns to verify fluid UI reactivity.
-5. **Ask Role-Specific AI (`Floating AI Button`)**:
-   - Click **"Ask Dev AI"** at bottom right (or press microphone for Web Speech voice dictation).
-   - Click the prompt chip **"What did we decide?"** or ask *"What was decided about SQLite?"*.
-   - See the immediate answer citing `[decision] ADR-001` and `[meeting] MTG-021`.
-   - Click on the cited `[decision] ADR-001` source chip—the drawer closes and navigates straight to the decision record!
-6. **Compile Developer Prompts (`Prompt Studio`)**:
-   - Navigate to `Prompt Studio` $\rightarrow$ select Claude 3.7 or DeepSeek CoT.
-   - Toggle **Token Economy** mode to see prompt compression in real-time, along with token and execution cost estimates in USD ($) and INR (₹).
+### 2. Contextual Task Execution & Rationale Chain
+1. Engineering opens a sprint item on the Kanban board ([`DevTasksView.tsx`](src/components/views/DevTasksView.tsx)) such as `DEV-SIGN-001`.
+2. The task inspects its explicit **"Why am I doing this? (Rationale Chain)"** link connecting directly to `ADR-001` and `MTG-021`.
+3. Clicking linked pills routes through the [Central Link Resolver](src/services/linkResolver.ts), jumping to the exact source entity without losing state.
+
+### 3. Decision Lineage & Memory Lifecycle
+1. When an architectural constraint changes, the previous decision record transitions to `superseded` rather than being silently deleted.
+2. A new `ProjectMemoryEvent` is recorded with before/after field diffs, plain-language justifications, and metric deltas.
+3. The global slide-over [`MemoryDrawer.tsx`](src/components/memory/MemoryDrawer.tsx) renders the complete historical lineage chain (`Previous` $\rightarrow$ `Current` $\rightarrow$ `Superseded By`).
+
+### 4. Cross-Role AI Grounding & Source Deep-Linking
+1. Team members query the AI Studio via text or Web Speech voice dictation ([`VoiceInput.tsx`](src/components/ai/VoiceInput.tsx)).
+2. If offline or without an API key, [`groundedMemoryEngine.ts`](src/services/groundedMemoryEngine.ts) deterministically extracts context from in-memory arrays.
+3. If configured with cloud keys, [`aiService.ts`](src/services/aiService.ts) executes against OpenRouter, OpenAI, or Groq with token and cost tracking.
+4. Every response includes verified `AISource` pills (`[decision] ADR-001`, `[meeting] MTG-021`). Clicking any chip immediately opens that source record.
 
 ---
 
-## ❓ Frequently Asked Questions (FAQ)
+## ❓ Technical FAQ
 
 <details>
-<summary><strong>Q: Do I need an OpenAI or OpenRouter API key to run and evaluate DevAtlas?</strong></summary>
+<summary><strong>Q: Does DevAtlas require an external AI API key to function?</strong></summary>
 
-**No.** DevAtlas includes a custom **Grounded Offline Memory Engine** that runs 100% deterministically in browser memory. It classifies query intent, retrieves real in-memory project entities, formats structured answers, and attaches verified source citations without making any network calls. You can evaluate the entire application completely offline.
+**No.** DevAtlas includes a custom **Grounded Offline Memory Engine** that runs 100% deterministically in browser memory. It classifies query intent, retrieves real in-memory project entities, formats structured answers, and attaches verified source citations without making any network calls. Cloud providers (OpenRouter, OpenAI, Groq) are optional.
 </details>
 
 <details>
-<summary><strong>Q: Do I need a live Firebase instance to run DevAtlas locally?</strong></summary>
+<summary><strong>Q: How does DevAtlas operate without a live Firebase backend?</strong></summary>
 
-**No.** If Firebase configuration keys are absent or invalid, the repository automatically falls back to reactive React Context state persisted to browser `localStorage`. All Kanban drag-and-drop actions, meeting action item toggles, decision creations, and memory event updates function seamlessly.
+If Firebase configuration keys are absent or invalid, the repository automatically falls back to reactive React Context state persisted to browser `localStorage`. All Kanban drag-and-drop actions, meeting action item toggles, decision creations, and memory event updates function seamlessly.
 </details>
 
 <details>
@@ -1104,9 +1096,9 @@ By enforcing strict **Role-Aware Context Retrieval** (bounded to ~3,000 tokens) 
 </details>
 
 <details>
-<summary><strong>Q: Can I import my own GitHub repository into DevAtlas?</strong></summary>
+<summary><strong>Q: How does GitHub repository ingestion work?</strong></summary>
 
-**Yes.** In the top navigation header, click **"Import Repo"**. Enter any public GitHub repository URL (e.g. `facebook/react` or `your-org/your-repo`). DevAtlas calls the public GitHub API, analyzes language distributions and README content, and bootstraps a synthesized multi-role workspace in your local session.
+In the top navigation header, clicking **"Import Repo"** triggers `githubService.ts`. It queries the public GitHub API for repository metadata, languages, and README content, then bootstraps a synthesized multi-role workspace in local session memory.
 </details>
 
 ---
