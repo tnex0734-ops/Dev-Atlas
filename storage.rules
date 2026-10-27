@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isValidSize() {
+      return request.resource.size < 25 * 1024 * 1024; // 25MB max
+    }
+    
+    function isValidContentType() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType.matches('application/json') ||
+             request.resource.contentType.matches('text/.*');
+    }
+
+    match /projects/{projectId}/files/{fileId}/{fileName} {
+      // Must be authenticated and file within reasonable size/type
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidSize() && isValidContentType();
+      allow delete: if isAuthenticated();
+    }
+  }
+}

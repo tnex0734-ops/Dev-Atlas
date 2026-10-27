@@ -1,0 +1,239 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isProjectMember(projectId) {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/projects/$(projectId)/members/$(request.auth.uid)) ||
+        // Project creator/owner fallback before member doc is written
+        (resource != null && resource.data.ownerId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.ownerId == request.auth.uid)
+      );
+    }
+    
+    function getMemberRole(projectId) {
+      return get(/databases/$(database)/documents/projects/$(projectId)/members/$(request.auth.uid)).data.role;
+    }
+    
+    function isRole(projectId, allowedRoles) {
+      return isProjectMember(projectId) && (
+        getMemberRole(projectId) in allowedRoles ||
+        getMemberRole(projectId) == 'all'
+      );
+    }
+
+    // Top-level users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isUser(userId);
+    }
+    
+    // Top-level projects collection
+    match /projects/{projectId} {
+      allow read: if isProjectMember(projectId);
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (
+        resource.data.ownerId == request.auth.uid ||
+        isRole(projectId, ['pm', 'all'])
+      );
+      
+      // Project Members
+      match /members/{memberId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isAuthenticated() && (
+          isRole(projectId, ['pm', 'all']) ||
+          request.auth.uid == memberId
+        );
+      }
+      
+      // Invites
+      match /invites/{inviteId} {
+        allow read: if isProjectMember(projectId) || (isAuthenticated() && resource.data.email == request.auth.token.email);
+        allow create, update, delete: if isRole(projectId, ['pm', 'all']);
+      }
+      
+      // Meetings & Syncs
+      match /meetings/{meetingId} {
+        allow read: if isProjectMember(projectId);
+        allow create, update: if isRole(projectId, ['pm', 'dev', 'designer', 'all']);
+        allow delete: if isRole(projectId, ['pm', 'all']);
+        
+        match /actionItems/{actionItemId} {
+          allow read: if isProjectMember(projectId);
+          allow write: if isProjectMember(projectId);
+        }
+      }
+      
+      // Decisions / ADRs
+      match /decisions/{decisionId} {
+        allow read: if isProjectMember(projectId);
+        allow create, update: if isRole(projectId, ['dev', 'pm', 'ops', 'all', 'memory']);
+        allow delete: if isRole(projectId, ['dev', 'pm', 'all']);
+      }
+      
+      // Tasks / Kanban
+      match /tasks/{taskId} {
+        allow read: if isProjectMember(projectId);
+        allow create, update: if isRole(projectId, ['dev', 'pm', 'qa', 'all']);
+        allow delete: if isRole(projectId, ['dev', 'pm', 'all']);
+      }
+      
+      // Product Requirements / PRDs
+      match /requirements/{requirementId} {
+        allow read: if isProjectMember(projectId);
+        allow create, update, delete: if isRole(projectId, ['pm', 'all']);
+      }
+      
+      // Project Memory Events
+      match /memoryEvents/{memoryEventId} {
+        allow read: if isProjectMember(projectId);
+        allow create, update: if isProjectMember(projectId);
+        allow delete: if isRole(projectId, ['pm', 'all']);
+      }
+      
+      // Audit Events (Append-only or server written)
+      match /auditEvents/{auditEventId} {
+        allow read: if isRole(projectId, ['pm', 'all', 'ops']);
+        allow create: if isAuthenticated();
+        allow update, delete: if false;
+      }
+      
+      // Feedback, Problem Clusters, Feature Requests
+      match /feedback/{feedbackId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['pm', 'all']);
+      }
+      match /problemClusters/{clusterId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['pm', 'all']);
+      }
+      match /featureRequests/{requestId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['pm', 'all']);
+      }
+      
+      // Design & Research
+      match /researchSessions/{sessionId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['designer', 'pm', 'all']);
+      }
+      match /researchFindings/{findingId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['designer', 'pm', 'all']);
+      }
+      match /userPatterns/{patternId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['designer', 'all']);
+      }
+      match /designTokens/{tokenId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['designer', 'dev', 'all']);
+      }
+      match /figmaSpecs/{specId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['designer', 'all']);
+      }
+      match /designReviews/{reviewId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['designer', 'dev', 'pm', 'all']);
+      }
+      match /validationSessions/{sessionId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['designer', 'dev', 'all']);
+        
+        match /pins/{pinId} {
+          allow read: if isProjectMember(projectId);
+          allow write: if isRole(projectId, ['designer', 'dev', 'all']);
+        }
+      }
+      
+      // QA & Security
+      match /securityAssessments/{assessmentId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['qa', 'dev', 'all']);
+      }
+      match /securityFindings/{findingId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['qa', 'dev', 'all']);
+      }
+      match /qaTestCases/{testCaseId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['qa', 'dev', 'all']);
+      }
+      match /bugs/{bugId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['qa', 'dev', 'pm', 'all']);
+      }
+      match /releaseReadiness/{readinessId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['qa', 'ops', 'pm', 'all']);
+      }
+      
+      // Operations
+      match /releases/{releaseId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['ops', 'pm', 'all']);
+      }
+      match /incidents/{incidentId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['ops', 'all']);
+      }
+      match /maintenance/{maintenanceId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['ops', 'dev', 'all']);
+      }
+      
+      // Context, Notes, Files
+      match /contextBlocks/{blockId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['dev', 'memory', 'all']);
+      }
+      match /notes/{noteId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isProjectMember(projectId);
+      }
+      match /files/{fileId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isProjectMember(projectId);
+      }
+      
+      // AI Conversations & Messages (Isolated per user)
+      match /aiConversations/{conversationId} {
+        allow read, write: if isAuthenticated() && (
+          resource == null || resource.data.userId == request.auth.uid
+        );
+        
+        match /messages/{messageId} {
+          allow read, write: if isAuthenticated();
+        }
+      }
+      
+      // AI Usage telemetry
+      match /aiUsage/{usageId} {
+        allow read: if isRole(projectId, ['pm', 'all', 'dev']);
+        allow create: if isAuthenticated();
+        allow update, delete: if false;
+      }
+      
+      // GitHub & External Integrations
+      match /integrations/{integrationId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['dev', 'ops', 'all']);
+      }
+      match /githubSyncRuns/{syncRunId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isRole(projectId, ['dev', 'ops', 'all']);
+      }
+    }
+  }
+}
